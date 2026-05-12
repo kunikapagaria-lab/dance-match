@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-deep: #030712;
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card2: #273549;
+  --accent-cyan: #22d3ee;
+  --accent-pink: #f472b6;
+  --accent-green: #4ade80;
+  --accent-yellow: #facc15;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+}
+
+h2 {
+  font-size: 1rem;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:not(:disabled):hover { opacity: 0.9; transform: translateY(-1px); }
+.btn:not(:disabled):active { transform: translateY(0); }
+
+.btn-primary  { background: var(--accent-cyan);  color: #030712; }
+.btn-secondary { background: var(--bg-card2); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-ready    { background: var(--accent-green); color: #030712; width: 100%; }
+.btn-start    { background: var(--accent-pink);  color: #030712; width: 100%; margin-top: 0.5rem; }
+
+.waiting-msg {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* ── Countdown ────────────────────────────────────────────────────────────── */
+.countdown-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 2rem;
+  background: var(--bg-deep);
+}
+
+.countdown-level-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--accent-cyan);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.countdown-circle-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 6px solid var(--accent-pink);
+  box-shadow: 0 0 40px var(--accent-pink), inset 0 0 40px rgba(244,114,182,0.1);
+  animation: pulse-ring 1s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.countdown-number {
+  font-family: var(--font-display);
+  font-size: 7rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1;
+  text-shadow: 0 0 30px var(--accent-pink);
+  transition: transform 0.1s;
+}
+
+.countdown-number.pop {
+  animation: pop 0.3s ease-out;
+}
+
+@keyframes pop {
+  0%   { transform: scale(1.5); opacity: 0.4; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.countdown-label {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: flicker 2s ease-in-out infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ── Beat indicator ───────────────────────────────────────────────────────── */
+.beat-indicator {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.45rem 1rem;
+  background: rgba(0,0,0,0.6);
+}
+
+.beat-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  position: relative;
+  overflow: visible;
+}
+
+.beat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent, #ff1f3d), var(--accent-soft, #ff5c70));
+  border-radius: 99px;
+  transition: width 0.08s linear;
+  box-shadow: 0 0 10px var(--glow, rgba(255,30,60,0.6));
+}
+
+.beat-pulse {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: var(--accent, #ff1f3d);
+  border-radius: 50%;
+  box-shadow: 0 0 14px var(--accent, #ff1f3d), 0 0 28px var(--glow, rgba(255,30,60,0.5));
+  transition: left 0.08s linear;
+}
+
+.beat-count {
+  font-family: 'Audiowide', cursive;
+  font-size: 0.72rem;
+  color: var(--accent, #ff1f3d);
+  min-width: 60px;
+  text-align: right;
+  text-shadow: 0 0 8px var(--glow, rgba(255,30,60,0.5));
+}

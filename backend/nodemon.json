@@ -1,0 +1,6 @@
+{
+  "ignore": [
+    "dance_data/*",
+    "uploads/*"
+  ]
+}
