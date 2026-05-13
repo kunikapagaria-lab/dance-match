@@ -409,6 +409,14 @@ io.on('connection', (socket) => {
       io.to(result.code).emit('player_joined', { players: result.room.players });
     }
   });
+
+  socket.on('leave_room', () => {
+    const result = removePlayer(socket.id);
+    if (result) {
+      socket.leave(result.code);
+      io.to(result.code).emit('player_joined', { players: result.room.players });
+    }
+  });
 });
 
 server.listen(PORT, () => console.log(`DanceMatch server on port ${PORT}`));

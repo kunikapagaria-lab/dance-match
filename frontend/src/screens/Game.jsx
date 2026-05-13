@@ -181,6 +181,14 @@ export default function Game() {
     socket.emit('toggle_pause', { isPaused: newPaused });
   };
 
+  const handleExitToMenu = (e) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to exit to the main menu?")) {
+      socket.emit('leave_room');
+      navigate('/');
+    }
+  };
+
   const otherPlayers = players.filter(p => p.id !== playerId);
 
   if (!levelData) return <div className="game-loading">Loading level data…</div>;
@@ -207,9 +215,24 @@ export default function Game() {
           <div className="game-overlay-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
             PAUSED
             {gameState.isHost && (
-              <span style={{ fontSize: '0.45em', letterSpacing: '0.25em', opacity: 0.8, color: 'white', fontFamily: 'Rajdhani, sans-serif' }}>
-                CLICK ANYWHERE TO RESUME
-              </span>
+              <>
+                <span style={{ fontSize: '0.45em', letterSpacing: '0.25em', opacity: 0.8, color: 'white', fontFamily: 'Rajdhani, sans-serif' }}>
+                  CLICK ANYWHERE TO RESUME
+                </span>
+                <button 
+                  onClick={handleExitToMenu}
+                  style={{
+                    marginTop: '20px', background: 'transparent', color: 'var(--accent)',
+                    border: '1px solid var(--accent)', padding: '12px 24px',
+                    fontFamily: 'Audiowide, cursive', fontSize: '0.35em', letterSpacing: '0.2em',
+                    cursor: 'pointer', transition: 'all 200ms', backdropFilter: 'blur(4px)'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'black'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--accent)'; }}
+                >
+                  EXIT TO MAIN MENU
+                </button>
+              </>
             )}
           </div>
         </div>

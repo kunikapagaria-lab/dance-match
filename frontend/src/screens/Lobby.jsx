@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGame } from '../App.jsx';
 import socket from '../socket.js';
 import '../styles/neon.css';
@@ -77,6 +78,7 @@ function AccentBtn({ children, onClick, disabled, outline, style = {} }) {
 
 export default function Lobby() {
   const { gameState, setGameState } = useGame();
+  const navigate = useNavigate();
   const { players, roomCode, playerId, isHost, level } = gameState;
 
   const [phase, setPhase] = useState('enter'); // 'enter' | 'room'
@@ -153,6 +155,21 @@ export default function Lobby() {
   if (phase === 'enter') {
     return (
       <div style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button 
+          onClick={() => navigate('/')}
+          style={{
+            position: 'absolute', top: 32, left: 32, zIndex: 100,
+            background: 'transparent', border: 'none', color: 'var(--accent)',
+            fontFamily: 'Audiowide, cursive', fontSize: 12, letterSpacing: '0.2em',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 16px', opacity: 0.8, transition: 'opacity 200ms'
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = 1}
+          onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
+        >
+          <span>←</span>
+          <span>BACK</span>
+        </button>
         <Card style={{ width: '100%', maxWidth: 440 }}>
           <div className="font-body font-semibold mb-1" style={{ fontSize: 11, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8 }}>MULTIPLAYER</div>
           <h2 className="font-display mb-8" style={{ fontSize: 28, color: 'white', margin: '0 0 32px' }}>Join the Battle</h2>
@@ -192,6 +209,21 @@ export default function Lobby() {
   // ── Room phase ───────────────────────────────────────────────────────────
   return (
     <div style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+      <button 
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute', top: 32, left: 32, zIndex: 100,
+          background: 'transparent', border: 'none', color: 'var(--accent)',
+          fontFamily: 'Audiowide, cursive', fontSize: 12, letterSpacing: '0.2em',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 16px', opacity: 0.8, transition: 'opacity 200ms'
+        }}
+        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+        onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
+      >
+        <span>←</span>
+        <span>BACK</span>
+      </button>
       <div style={{ width: '100%', maxWidth: 900, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
 
         {/* Left: Room code + Players */}

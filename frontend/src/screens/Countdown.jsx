@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGame } from '../App.jsx';
 import socket from '../socket.js';
 import '../styles/neon.css';
 
 export default function Countdown() {
   const { gameState } = useGame();
+  const navigate = useNavigate();
   const { countdownValue, level, isHost } = gameState;
   const numRef   = useRef(null);
   const videoRef = useRef(null);
@@ -55,6 +57,21 @@ export default function Countdown() {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       gap: 20,
     }}>
+      <button 
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute', top: 32, left: 32, zIndex: 100,
+          background: 'transparent', border: 'none', color: 'var(--accent)',
+          fontFamily: 'Audiowide,cursive', fontSize: 12, letterSpacing: '0.2em',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 16px', opacity: 0.8, transition: 'opacity 200ms'
+        }}
+        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+        onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
+      >
+        <span>←</span>
+        <span>BACK</span>
+      </button>
       {/* Level label */}
       <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 11, letterSpacing: '0.4em', color: 'var(--accent, #ff1f3d)', opacity: 0.85 }}>
         {levelLabel}

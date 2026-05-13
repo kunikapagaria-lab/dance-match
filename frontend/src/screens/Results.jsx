@@ -24,6 +24,21 @@ export default function Results() {
       overflow: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '32px 20px',
     }}>
+      <button 
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute', top: 32, left: 32, zIndex: 100,
+          background: 'transparent', border: 'none', color: 'var(--accent)',
+          fontFamily: 'Audiowide, cursive', fontSize: 12, letterSpacing: '0.2em',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 16px', opacity: 0.8, transition: 'opacity 200ms'
+        }}
+        onMouseEnter={e => e.currentTarget.style.opacity = 1}
+        onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
+      >
+        <span>←</span>
+        <span>HOME</span>
+      </button>
       <div style={{ width: '100%', maxWidth: 700 }}>
 
         {/* Banner */}

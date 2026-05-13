@@ -129,10 +129,7 @@ export default function LandingPage() {
 
       {/* Hero text */}
       <div style={S.hero}>
-        <div className={sw} style={{ ...S.eyebrow, marginBottom: 16 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)', display: 'inline-block', animation: 'pulse-dot 1.6s ease-in-out infinite', flexShrink: 0 }} />
-          <span style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 600, fontSize: 12, letterSpacing: '0.32em', color: palette.text, opacity: 0.85 }}>DANCE MATCH PROD™</span>
-        </div>
+
         <div className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 600, fontSize: 16, letterSpacing: '0.28em', opacity: 0.7, color: palette.text, marginBottom: 4 }}>{avatar.style}</div>
         <h1 className={`glow-text ${sw}`} style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(64px,11vw,170px)', lineHeight: 0.9, color: palette.text, margin: '0 0 16px' }}>{avatar.name}</h1>
         <p className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 300, fontStyle: 'italic', fontSize: 18, maxWidth: 440, opacity: 0.78, color: palette.text, marginBottom: 4 }}>
