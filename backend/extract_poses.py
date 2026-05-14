@@ -81,10 +81,10 @@ def download_video(url, output_path):
         raise RuntimeError(f'yt-dlp error: {stderr}')
 
 
-MODEL_PATH = os.path.join(SCRIPT_DIR, 'pose_landmarker.task')
+MODEL_PATH = os.path.join(SCRIPT_DIR, 'pose_landmarker_lite.task')
 MODEL_URL  = (
     'https://storage.googleapis.com/mediapipe-models/'
-    'pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task'
+    'pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'
 )
 
 

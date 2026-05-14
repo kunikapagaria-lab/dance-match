@@ -190,7 +190,7 @@ app.post('/process-video', (req, res) => {
   jobs.set(jobId, { status: 'processing', progress: 0, message: 'Starting…', levelId, videoId: null });
 
   // Spawn Python extraction subprocess
-  const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, url, outputPath, '10'], {
+  const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, url, outputPath, '5'], {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, MEDIAPIPE_DISABLE_GPU: '1' },
   });
@@ -264,7 +264,7 @@ app.post('/upload-video', upload.single('video'), (req, res) => {
 
   jobs.set(jobId, { status: 'processing', progress: 0, message: 'Starting…', levelId, videoId: null });
 
-  const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, videoPath, outputPath, '10'], {
+  const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, videoPath, outputPath, '5'], {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, MEDIAPIPE_DISABLE_GPU: '1' },
   });
