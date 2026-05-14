@@ -12,15 +12,19 @@ Progress is reported to stdout as:
 """
 
 import sys
-import json
 import os
+
+# Must be set before mediapipe is imported
+os.environ['MEDIAPIPE_DISABLE_GPU'] = '1'
+
+import json
 import re
 import subprocess
 import tempfile
+import shutil
 
-# Use Python 3.10 for yt-dlp (mediapipe stays on 3.14)
-PYTHON_310 = r'C:\Program Files\Python310\python.exe'
-NODE_BIN   = r'C:\Program Files\nodejs\node.exe'
+PYTHON_BIN = sys.executable
+NODE_BIN   = shutil.which('node') or 'node'
 
 # Optional cookies.txt path — place a Netscape-format cookies file here
 # to avoid YouTube rate limits. Export from Chrome via the
@@ -44,7 +48,7 @@ def get_video_id(url):
 
 def download_video(url, output_path):
     """Download best quality mp4 at max 720p using yt-dlp via Python 3.10."""
-    python = PYTHON_310 if os.path.exists(PYTHON_310) else sys.executable
+    python = PYTHON_BIN
 
     cmd = [
         python, '-m', 'yt_dlp',
@@ -99,7 +103,10 @@ def extract_poses(video_path, target_fps=10):
 
     ensure_model()
 
-    base_options = mp_python.BaseOptions(model_asset_path=MODEL_PATH)
+    base_options = mp_python.BaseOptions(
+        model_asset_path=MODEL_PATH,
+        delegate=mp_python.BaseOptions.Delegate.CPU,
+    )
     options = mp_vision.PoseLandmarkerOptions(
         base_options=base_options,
         running_mode=mp_vision.RunningMode.VIDEO,
