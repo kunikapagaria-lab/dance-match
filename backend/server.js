@@ -158,6 +158,7 @@ app.post('/process-video', (req, res) => {
   // Spawn Python extraction subprocess
   const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, url, outputPath, '10'], {
     stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, MEDIAPIPE_DISABLE_GPU: '1' },
   });
 
   child.stdout.on('data', (chunk) => {
@@ -231,6 +232,7 @@ app.post('/upload-video', upload.single('video'), (req, res) => {
 
   const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, videoPath, outputPath, '10'], {
     stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, MEDIAPIPE_DISABLE_GPU: '1' },
   });
 
   child.stdout.on('data', (chunk) => {
