@@ -329,7 +329,7 @@ export default function Lobby() {
                   {sv.type === 'youtube' && sv.videoId ? (
                     <img src={`https://img.youtube.com/vi/${sv.videoId}/mqdefault.jpg`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Thumbnail" />
                   ) : (
-                    <video src={`${SERVER_URL}/video/${sv.id}#t=0.5`} preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
+                    <video src={`${sv.cloudinaryUrl || `${SERVER_URL}/video/${sv.id}`}#t=0.5`} preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
                   )}
                   {sv.duration > 0 && (
                     <span className="font-display" style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.85)', padding: '2px 4px', borderRadius: '4px', fontSize: 10, color: 'var(--accent)' }}>

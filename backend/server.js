@@ -6,7 +6,14 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const { createRoom, getRoom, joinRoom, setLevel, setReady, startRound, submitScore, removePlayer, getRoomByPlayer } = require('./rooms');
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const app = express();
 app.use(cors());
@@ -69,6 +76,27 @@ try {
   }
 } catch (_) { /* custom dir doesn't exist yet */ }
 
+// Restore any levels saved to Cloudinary that aren't on local disk
+async function restoreFromCloudinary() {
+  if (!process.env.CLOUDINARY_CLOUD_NAME) return;
+  try {
+    const result = await cloudinary.api.resources({
+      type: 'upload', resource_type: 'raw', prefix: 'dance_levels/', max_results: 500,
+    });
+    for (const resource of result.resources) {
+      const levelId = path.basename(resource.public_id);
+      if (customLevels[levelId]) continue;
+      const resp = await fetch(resource.secure_url);
+      const data = await resp.json();
+      customLevels[levelId] = data;
+      console.log(`Restored level ${levelId} from Cloudinary`);
+    }
+  } catch (e) {
+    console.warn('Could not restore from Cloudinary:', e.message);
+  }
+}
+restoreFromCloudinary();
+
 // In-memory processing jobs: jobId -> { status, progress, message, levelId, videoId, error }
 const jobs = new Map();
 
@@ -104,32 +132,38 @@ app.get('/level/:id', (req, res) => {
 app.get('/custom-levels', (req, res) => {
   const levelsList = Object.entries(customLevels).map(([id, data]) => ({
     id,
-    type: data.type || (data.videoFile ? 'upload' : 'youtube'),
+    type: data.type || (data.cloudinaryUrl || data.videoFile ? 'upload' : 'youtube'),
     videoFile: data.videoFile || null,
+    cloudinaryUrl: data.cloudinaryUrl || null,
     duration: data.duration || 0,
-    videoId: data.videoId || null
+    videoId: data.videoId || null,
   }));
   res.json(levelsList);
 });
 
 // Delete a custom level
-app.delete('/level/:id', (req, res) => {
+app.delete('/level/:id', async (req, res) => {
   const id = req.params.id;
   const levelData = customLevels[id];
-  
-  if (!levelData) {
-    return res.status(404).json({ error: 'Level not found' });
-  }
-  
+
+  if (!levelData) return res.status(404).json({ error: 'Level not found' });
+
   try {
     const jsonPath = path.join(CUSTOM_DIR, `${id}.json`);
     if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath);
-    
-    if (levelData.type === 'upload' && levelData.videoFile) {
+
+    if (levelData.videoFile) {
       const videoPath = path.join(UPLOADS_DIR, levelData.videoFile);
       if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
     }
-    
+
+    if (process.env.CLOUDINARY_CLOUD_NAME) {
+      await Promise.allSettled([
+        cloudinary.uploader.destroy(`dance_videos/${id}`, { resource_type: 'video' }),
+        cloudinary.uploader.destroy(`dance_levels/${id}`, { resource_type: 'raw' }),
+      ]);
+    }
+
     delete customLevels[id];
     res.json({ success: true });
   } catch (err) {
@@ -252,14 +286,37 @@ app.post('/upload-video', upload.single('video'), (req, res) => {
     console.error(`[upload job ${jobId}] stderr:`, chunk.toString());
   });
 
-  child.on('close', (code) => {
+  child.on('close', async (code) => {
     const job = jobs.get(jobId);
     if (!job) return;
     if (code === 0 && fs.existsSync(outputPath)) {
       try {
         const data = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
-        // Store video filename so client can stream it
-        data.videoFile = req.file.filename;
+
+        if (process.env.CLOUDINARY_CLOUD_NAME) {
+          try {
+            job.message = 'Uploading to cloud…';
+            const videoResult = await cloudinary.uploader.upload(videoPath, {
+              resource_type: 'video',
+              public_id: `dance_videos/${levelId}`,
+              overwrite: true,
+            });
+            data.cloudinaryUrl = videoResult.secure_url;
+            fs.writeFileSync(outputPath, JSON.stringify(data));
+            await cloudinary.uploader.upload(outputPath, {
+              resource_type: 'raw',
+              public_id: `dance_levels/${levelId}`,
+              overwrite: true,
+            });
+            fs.unlinkSync(videoPath);
+          } catch (e) {
+            console.warn('Cloudinary upload failed, falling back to local:', e.message);
+            data.videoFile = req.file.filename;
+          }
+        } else {
+          data.videoFile = req.file.filename;
+        }
+
         fs.writeFileSync(outputPath, JSON.stringify(data));
         customLevels[levelId] = data;
         job.status   = 'done';

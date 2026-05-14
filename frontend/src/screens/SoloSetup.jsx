@@ -30,7 +30,7 @@ export default function SoloSetup() {
   useEffect(() => {
     fetch(`${SERVER_URL}/custom-levels`)
       .then(r => r.json())
-      .then(data => setSavedLevels(Array.isArray(data) ? data.filter(l => l.videoFile) : []))
+      .then(data => setSavedLevels(Array.isArray(data) ? data.filter(l => l.cloudinaryUrl || l.videoFile) : []))
       .catch(() => {});
   }, []);
 
@@ -189,8 +189,8 @@ export default function SoloSetup() {
                         alt="Thumbnail"
                       />
                     ) : (
-                      <video 
-                        src={`${SERVER_URL}/video/${sv.id}#t=0.5`} 
+                      <video
+                        src={`${sv.cloudinaryUrl || `${SERVER_URL}/video/${sv.id}`}#t=0.5`}
                         preload="metadata"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         muted playsInline

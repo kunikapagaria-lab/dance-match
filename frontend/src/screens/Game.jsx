@@ -260,12 +260,12 @@ export default function Game() {
       <div className="game-main">
         <div className="reference-panel">
 
-          {isUpload && levelData?.videoFile ? (
+          {isUpload && (levelData?.cloudinaryUrl || levelData?.videoFile) ? (
             <>
               <div className="ref-upload-video">
                 <video
                   ref={videoRef}
-                  src={`${SERVER_URL}/video/${level}`}
+                  src={levelData.cloudinaryUrl || `${SERVER_URL}/video/${level}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   preload="auto" playsInline
                 />
