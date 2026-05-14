@@ -175,19 +175,22 @@ export default function Game() {
     return () => { socket.off('players_poses'); socket.off('round_result'); socket.off('game_paused'); };
   }, []);
 
-  const handleTogglePause = () => {
+  const handleTogglePause = useCallback(() => {
     const newPaused = !isPaused;
     setIsPaused(newPaused);
     socket.emit('toggle_pause', { isPaused: newPaused });
-  };
+  }, [isPaused]);
 
-  const handleExitToMenu = (e) => {
-    e.stopPropagation();
-    if (window.confirm("Are you sure you want to exit to the main menu?")) {
-      socket.emit('leave_room');
-      navigate('/');
-    }
-  };
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Space' && !gameOver) {
+        e.preventDefault();
+        handleTogglePause();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleTogglePause, gameOver]);
 
   const otherPlayers = players.filter(p => p.id !== playerId);
 
@@ -208,108 +211,100 @@ export default function Game() {
       {isPaused && !gameOver && (
         <div 
           className="game-overlay" 
-          onClick={gameState.isHost ? handleTogglePause : undefined}
-          style={{ cursor: gameState.isHost ? 'pointer' : 'default' }}
-          title={gameState.isHost ? "Click to Resume" : "Paused by Host"}
+          style={{ cursor: 'default' }}
         >
-          <div className="game-overlay-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+          <div className="game-overlay-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
             PAUSED
-            {gameState.isHost && (
-              <>
-                <span style={{ fontSize: '0.45em', letterSpacing: '0.25em', opacity: 0.8, color: 'white', fontFamily: 'Rajdhani, sans-serif' }}>
-                  CLICK ANYWHERE TO RESUME
-                </span>
+            {gameState.isHost ? (
+              <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
                 <button 
-                  onClick={handleExitToMenu}
-                  style={{
-                    marginTop: '20px', background: 'transparent', color: 'var(--accent)',
-                    border: '1px solid var(--accent)', padding: '12px 24px',
-                    fontFamily: 'Audiowide, cursive', fontSize: '0.35em', letterSpacing: '0.2em',
-                    cursor: 'pointer', transition: 'all 200ms', backdropFilter: 'blur(4px)'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'black'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--accent)'; }}
+                  onClick={(e) => { e.stopPropagation(); handleTogglePause(); }}
+                  style={{ background: 'var(--accent)', color: 'black', border: 'none', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', transition: 'all 200ms', borderRadius: '4px' }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px var(--glow)'}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
                 >
-                  EXIT TO MAIN MENU
+                  PLAY
                 </button>
-              </>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); navigate(gameState.gameMode === 'solo' ? '/solo-setup' : '/lobby'); }}
+                  style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--accent)', border: '1px solid var(--accent)', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', transition: 'all 200ms', borderRadius: '4px' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,31,61,0.2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
+                >
+                  NEXT ROUND
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); navigate('/'); }}
+                  style={{ background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', transition: 'all 200ms', borderRadius: '4px' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'white'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
+                >
+                  MAIN MENU
+                </button>
+              </div>
+            ) : (
+              <span style={{ fontSize: '0.45em', letterSpacing: '0.25em', opacity: 0.8, color: 'white', fontFamily: 'Rajdhani, sans-serif' }}>
+                PAUSED BY HOST
+              </span>
             )}
           </div>
         </div>
       )}
 
-      {/* Motivational pop-up */}
-      <MotivationalMessage message={motivMsg} msgKey={motivKey} />
 
-      {/* Fever mode banner */}
-      {feverMode && <div className="fever-banner">⚡ FEVER MODE ⚡</div>}
 
-      <div className="beat-bar-row" style={{ display: 'flex', alignItems: 'center', position: 'relative', zIndex: 110 }}>
-        {gameState.isHost && !gameOver && (
-          <button 
-            onClick={handleTogglePause}
-            style={{
-              background: 'transparent', color: 'var(--accent)', border: 'none',
-              padding: '0 15px', cursor: 'pointer', fontSize: 18,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              outline: 'none'
-            }}
-            title={isPaused ? "Resume" : "Pause"}
-          >
-            {isPaused ? '▶' : '⏸'}
-          </button>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <BeatIndicator total={totalBeats} getElapsed={getElapsed} keyframes={keyframes} defaultSegmentDuration={defaultSegmentDuration} />
-        </div>
-      </div>
+
+
+
 
       <div className="game-main">
         <div className="reference-panel">
-          <div className="panel-label">Reference</div>
 
           {isUpload && levelData?.videoFile ? (
-            <div className="ref-upload-stack">
+            <>
               <div className="ref-upload-video">
-                <span className="ref-section-label">VIDEO</span>
                 <video
                   ref={videoRef}
                   src={`${SERVER_URL}/video/${level}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   preload="auto" playsInline
                 />
+                <div className="video-progress-overlay">
+                  <BeatIndicator total={totalBeats} getElapsed={getElapsed} keyframes={keyframes} defaultSegmentDuration={defaultSegmentDuration} />
+                </div>
               </div>
-              <div className="ref-upload-skeleton ref-upload-bottom-row">
-                <div className="ref-bottom-half">
-                  <span className="ref-section-label">POSE</span>
-                  <ReferenceDancer keyframe={currentKeyframe} />
+              <div className="ref-upload-skeleton">
+                <div className="reference-dancer">
+                  <canvas ref={playerSkeletonCanvasRef} width={320} height={480} className="reference-canvas" />
+                  {latestPlayerLandmarks && (
+                    <PoseOverlay canvasRef={playerSkeletonCanvasRef}
+                      landmarks={latestPlayerLandmarks.map(lm => ({ ...lm, x: 1 - lm.x }))}
+                      color="#ffffff" lineWidth={4} dotRadius={6} />
+                  )}
+                  {!latestPlayerLandmarks && (
+                    <div className="reference-placeholder"><span>&#128372;</span><p>Waiting for you…</p></div>
+                  )}
                 </div>
-                <div className="ref-bottom-half" style={{ borderLeft: '1px solid var(--accent, #ff1f3d)' }}>
-                  <span className="ref-section-label">YOU</span>
-                  <div className="reference-dancer">
-                    <canvas ref={playerSkeletonCanvasRef} width={320} height={480} className="reference-canvas" />
-                    {latestPlayerLandmarks && (
-                      <PoseOverlay canvasRef={playerSkeletonCanvasRef}
-                        landmarks={latestPlayerLandmarks.map(lm => ({ ...lm, x: 1 - lm.x }))}
-                        color="#ffffff" lineWidth={4} dotRadius={6} />
-                    )}
-                    {!latestPlayerLandmarks && (
-                      <div className="reference-placeholder"><span>&#128372;</span><p>Waiting…</p></div>
-                    )}
-                  </div>
-                </div>
+              </div>
+            </>
+          ) : (
+            <div className="reference-dancer">
+              <canvas ref={playerSkeletonCanvasRef} width={320} height={480} className="reference-canvas" />
+              {latestPlayerLandmarks && (
+                <PoseOverlay canvasRef={playerSkeletonCanvasRef}
+                  landmarks={latestPlayerLandmarks.map(lm => ({ ...lm, x: 1 - lm.x }))}
+                  color="#ffffff" lineWidth={4} dotRadius={6} />
+              )}
+              <div className="video-progress-overlay">
+                <BeatIndicator total={totalBeats} getElapsed={getElapsed} keyframes={keyframes} defaultSegmentDuration={defaultSegmentDuration} />
               </div>
             </div>
-          ) : (
-            <ReferenceDancer keyframe={currentKeyframe} />
           )}
         </div>
 
         <div className="camera-panel">
-          <div className="panel-label">You</div>
 
-          {/* Beat feedback label — floats over camera */}
-          <BeatFeedback score={feedbackScore} feedbackKey={feedbackKey} />
+
 
           {/* Combo counter */}
           <ComboDisplay count={comboCount} feverMode={feverMode} />
@@ -334,6 +329,8 @@ export default function Game() {
       <div className="leaderboard-row">
         <Leaderboard players={players} scores={liveScores} round={round || 1} />
       </div>
+
+
 
       {gameOver && (
         <div className="game-overlay">

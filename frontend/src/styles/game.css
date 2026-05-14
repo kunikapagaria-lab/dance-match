@@ -15,39 +15,41 @@
 }
 
 /* ── Beat bar ───────────────────────────────────────────────────────────── */
-.beat-bar-row {
-  flex-shrink: 0;
-  background: rgba(0,0,0,0.6);
-  border-bottom: 1px solid var(--accent, #ff1f3d);
-  box-shadow: 0 2px 20px var(--glow-soft, rgba(255,30,60,0.2));
+.video-progress-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  z-index: 50;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.4);
 }
 
 /* ── Main area ──────────────────────────────────────────────────────────── */
 .game-main {
-  display: flex; flex: 1; min-height: 0; gap: 0;
+  display: flex; flex: 1; min-height: 0; gap: 20px;
+  padding: 15px;
 }
 
 /* ── Panel label pill ───────────────────────────────────────────────────── */
 .panel-label {
-  position: absolute; top: 0.5rem; left: 50%; transform: translateX(-50%);
+  position: absolute; top: 0.75rem; left: 50%; transform: translateX(-50%);
   font-family: 'Audiowide', cursive;
-  font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+  font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--accent, #ff1f3d);
-  background: rgba(0,0,0,0.7);
-  border: 1px solid var(--accent, #ff1f3d);
-  padding: 0.2rem 0.7rem; border-radius: 99px;
+  background: rgba(0,0,0,0.85);
+  border: 1.5px solid var(--accent, #ff1f3d);
+  padding: 0.4rem 1.2rem; border-radius: 99px;
   z-index: 10;
-  box-shadow: 0 0 8px var(--glow-soft, rgba(255,30,60,0.3));
+  box-shadow: 0 0 15px var(--glow-soft, rgba(255,30,60,0.4));
 }
 
 /* ── Reference panel ────────────────────────────────────────────────────── */
 .reference-panel {
   position: relative; flex: 0 0 320px;
-  background: rgba(6, 1, 10, 0.85);
-  border-right: 1px solid var(--accent, #ff1f3d);
-  box-shadow: 2px 0 20px var(--glow-soft, rgba(255,30,60,0.15));
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
+  display: flex; flex-direction: column; gap: 20px;
+  min-height: 0;
 }
 
 .reference-dancer {
@@ -77,10 +79,14 @@
 .ref-upload-video,
 .ref-upload-skeleton {
   flex: 1; position: relative; overflow: hidden;
+  background: rgba(6, 1, 10, 0.85);
+  border: 1px solid var(--accent, #ff1f3d);
+  border-radius: 24px;
+  box-shadow: 0 0 20px var(--glow-soft, rgba(255,30,60,0.15));
 }
 
 .ref-upload-video {
-  border-bottom: 1px solid var(--accent, #ff1f3d);
+  /* No special border here, handled by bubble class above */
 }
 
 .ref-upload-skeleton {
@@ -104,22 +110,24 @@
 }
 
 .ref-section-label {
-  position: absolute; top: 0.35rem; left: 50%; transform: translateX(-50%);
-  font-family: 'Audiowide', cursive; font-size: 0.5rem; letter-spacing: 0.2em;
-  color: var(--accent, #ff1f3d); background: rgba(0,0,0,0.7);
-  border: 1px solid var(--accent, #ff1f3d);
-  padding: 0.15rem 0.5rem; border-radius: 99px;
+  position: absolute; top: 0.5rem; left: 50%; transform: translateX(-50%);
+  font-family: 'Audiowide', cursive; font-size: 0.65rem; letter-spacing: 0.2em;
+  color: var(--accent, #ff1f3d); background: rgba(0,0,0,0.85);
+  border: 1.5px solid var(--accent, #ff1f3d);
+  padding: 0.3rem 1rem; border-radius: 99px;
   z-index: 10; pointer-events: none;
-  box-shadow: 0 0 6px var(--glow-soft, rgba(255,30,60,0.3));
+  box-shadow: 0 0 10px var(--glow-soft, rgba(255,30,60,0.4));
 }
 
 /* ── Camera panel ───────────────────────────────────────────────────────── */
 .camera-panel {
   position: relative; flex: 1;
   background: #000;
-  border-left: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--accent, #ff1f3d);
+  border-radius: 24px;
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 30px var(--glow-soft, rgba(255,30,60,0.15));
 }
 
 .player-camera { position: relative; width: 100%; height: 100%; }
@@ -133,14 +141,14 @@
 
 /* Status banner */
 .camera-status-banner {
-  position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  border: 1px solid var(--accent, #ff1f3d);
+  position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  border: 1.5px solid var(--accent, #ff1f3d);
   color: var(--accent, #ff1f3d);
-  font-family: 'Audiowide', cursive; font-size: 0.7rem; letter-spacing: 0.1em;
-  padding: 0.4rem 1.1rem; border-radius: 99px;
+  font-family: 'Audiowide', cursive; font-size: 0.8rem; letter-spacing: 0.1em;
+  padding: 0.6rem 1.8rem; border-radius: 99px;
   white-space: nowrap; z-index: 20;
-  box-shadow: 0 0 12px var(--glow-soft, rgba(255,30,60,0.3));
+  box-shadow: 0 0 15px var(--glow-soft, rgba(255,30,60,0.4));
 }
 
 /* ── Score ring ─────────────────────────────────────────────────────────── */
@@ -170,7 +178,7 @@
   display: flex; flex-direction: column; align-items: center;
   background: rgba(0,0,0,0.75);
   border: 1px solid var(--accent, #ff1f3d);
-  border-radius: 8px; padding: 0.25rem 0.55rem; z-index: 20; min-width: 52px;
+  border-radius: 20px; padding: 0.35rem 0.65rem; z-index: 20; min-width: 52px;
   box-shadow: 0 0 10px var(--glow-soft, rgba(255,30,60,0.2));
 }
 
@@ -272,10 +280,10 @@
 
 .lb-entry {
   display: flex; align-items: center; gap: 0.4rem;
-  font-size: 0.82rem; padding: 0.15rem 0.6rem;
+  font-size: 0.82rem; padding: 0.25rem 0.8rem;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 4px;
+  border-radius: 20px;
 }
 
 .lb-rank  { color: rgba(255,255,255,0.3); font-size: 0.65rem; font-family: 'Audiowide', cursive; }
@@ -354,9 +362,10 @@
   background: rgba(0,0,0,0.7);
   border: 1.5px solid var(--accent, #ff1f3d);
   box-shadow: 0 0 16px var(--glow-soft, rgba(255,30,60,0.3));
-  padding: 0.4rem 0.7rem;
+  padding: 0.5rem 0.9rem;
   gap: 1px;
   pointer-events: none;
+  border-radius: 20px;
 }
 
 .combo-display.combo-fever {
@@ -420,12 +429,13 @@
   color: white;
   background: rgba(0,0,0,0.85);
   border: 1.5px solid var(--accent, #ff1f3d);
-  padding: 0.7rem 2rem;
+  padding: 0.8rem 2.4rem;
   text-align: center;
   white-space: nowrap;
   letter-spacing: 0.12em;
   box-shadow: 0 0 40px var(--glow-soft, rgba(255,30,60,0.3));
   pointer-events: none;
+  border-radius: 40px;
   animation: motiv-life 2.6s ease forwards;
 }
 
@@ -484,7 +494,7 @@
   color: var(--accent, #ff1f3d); text-align: center;
   text-shadow: 0 0 30px var(--glow, rgba(255,30,60,0.7));
   border: 2px solid var(--accent, #ff1f3d);
-  border-radius: 16px;
+  border-radius: 40px;
   padding: 3rem 6rem;
   background: rgba(0,0,0,0.8);
   box-shadow: 0 0 60px var(--glow-soft, rgba(255,30,60,0.3));

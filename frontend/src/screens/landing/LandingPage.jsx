@@ -117,9 +117,9 @@ export default function LandingPage() {
 
       {/* Header */}
       <header style={S.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 8, height: 8, background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)', display: 'inline-block', transform: 'rotate(45deg)' }} />
-          <span style={{ fontFamily: 'Audiowide,cursive', color: 'white', fontSize: 13, letterSpacing: '0.3em' }}>DANCE·MATCH</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ width: 12, height: 12, background: 'var(--accent)', boxShadow: '0 0 12px var(--accent)', display: 'inline-block', transform: 'rotate(45deg)' }} />
+          <span style={{ fontFamily: 'Audiowide,cursive', color: 'white', fontSize: 24, letterSpacing: '0.2em', textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>DANCE·MATCH</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 6px var(--accent)', display: 'inline-block', animation: 'pulse-dot 1.6s ease-in-out infinite' }} />
@@ -129,9 +129,8 @@ export default function LandingPage() {
 
       {/* Hero text */}
       <div style={S.hero}>
-
-        <div className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 600, fontSize: 16, letterSpacing: '0.28em', opacity: 0.7, color: palette.text, marginBottom: 4 }}>{avatar.style}</div>
-        <h1 className={`glow-text ${sw}`} style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(64px,11vw,170px)', lineHeight: 0.9, color: palette.text, margin: '0 0 16px' }}>{avatar.name}</h1>
+        <div className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 600, fontSize: 16, letterSpacing: '0.28em', opacity: 0.7, color: palette.text, marginBottom: 8 }}>{avatar.style}</div>
+        <h1 className={`glow-text ${sw}`} style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(48px,8vw,100px)', lineHeight: 0.9, color: palette.text, margin: '0 0 16px' }}>{avatar.name}</h1>
         <p className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 300, fontStyle: 'italic', fontSize: 18, maxWidth: 440, opacity: 0.78, color: palette.text, marginBottom: 4 }}>
           " {avatar.quote} "
         </p>

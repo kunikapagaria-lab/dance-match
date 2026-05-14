@@ -19,8 +19,7 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 4000;
 
-// Python 3.14 path where mediapipe is installed
-const PYTHON_BIN = 'C:\\Program Files\\Python314\\python.exe';
+const PYTHON_BIN = process.env.PYTHON_BIN || 'python3';
 const EXTRACT_SCRIPT = path.join(__dirname, 'extract_poses.py');
 const CUSTOM_DIR = path.join(__dirname, 'dance_data', 'custom');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
@@ -111,6 +110,31 @@ app.get('/custom-levels', (req, res) => {
     videoId: data.videoId || null
   }));
   res.json(levelsList);
+});
+
+// Delete a custom level
+app.delete('/level/:id', (req, res) => {
+  const id = req.params.id;
+  const levelData = customLevels[id];
+  
+  if (!levelData) {
+    return res.status(404).json({ error: 'Level not found' });
+  }
+  
+  try {
+    const jsonPath = path.join(CUSTOM_DIR, `${id}.json`);
+    if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath);
+    
+    if (levelData.type === 'upload' && levelData.videoFile) {
+      const videoPath = path.join(UPLOADS_DIR, levelData.videoFile);
+      if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+    }
+    
+    delete customLevels[id];
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete level files' });
+  }
 });
 
 // Start video processing job
@@ -321,6 +345,24 @@ io.on('connection', (socket) => {
     if (!room || room.host !== socket.id) return;
     setLevel(room.code, level);
     io.to(room.code).emit('level_changed', { level });
+  });
+  socket.on('reset_tournament', () => {
+    const room = getRoomByPlayer(socket.id);
+    if (!room || room.host !== socket.id) return;
+    room.round = 0;
+    room.bracket = [];
+    room.state = 'lobby';
+    room.scores = {};
+    room.players.forEach(p => { p.wins = 0; p.ready = false; });
+    io.to(room.code).emit('tournament_reset');
+  });
+
+  socket.on('host_next_round', () => {
+    const room = getRoomByPlayer(socket.id);
+    if (!room || room.host !== socket.id) return;
+    room.state = 'lobby';
+    room.players.forEach(p => { p.ready = false; });
+    io.to(room.code).emit('navigate_lobby');
   });
 
   socket.on('player_ready', () => {

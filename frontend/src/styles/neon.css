@@ -22,10 +22,7 @@
   from { transform: translateX(0);     opacity: 1; }
   to   { transform: translateX(-48px); opacity: 0; }
 }
-@keyframes horizon-glow {
-  0%, 100% { box-shadow: 0 0 40px 8px var(--glow-soft); }
-  50%       { box-shadow: 0 0 80px 16px var(--glow); }
-}
+
 
 .font-display { font-family: 'Audiowide', cursive !important; }
 .font-body    { font-family: 'Rajdhani', sans-serif !important; }
@@ -53,6 +50,14 @@
   background: var(--accent);
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @keyframes scan-laser {
   0%   { top: -10%; opacity: 0; }
   10%  { opacity: 1; }
@@ -69,4 +74,62 @@
   box-shadow: 0 0 15px var(--accent), 0 0 30px var(--glow);
   animation: scan-laser 1.2s linear infinite;
   z-index: 10;
+}
+
+.scanner-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(var(--accent) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 
+    40px 40px,
+    40px 40px,
+    5px 5px,
+    5px 5px;
+  background-position: center center;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.7;
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 90%);
+  animation: grid-flicker 3s infinite alternate;
+}
+
+.scanner-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--accent) 3px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      var(--accent) 3px,
+      transparent 4px
+    );
+  background-size: 100% 80px, 80px 100%;
+  animation: hologram-scan 3s linear infinite;
+  opacity: 0.8;
+  mix-blend-mode: screen;
+}
+
+@keyframes hologram-scan {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 0 80px, 80px 0; }
+}
+
+@keyframes grid-flicker {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  25%, 75% { opacity: 0.6; }
 }

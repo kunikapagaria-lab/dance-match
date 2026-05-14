@@ -101,13 +101,7 @@ export default function SceneBackground({ parallax, palette }) {
       <div style={{ position: 'absolute', inset: 0, transform: lay(-18, -8, parallax) }}>
         <MidSkyline accent={palette.accent} />
       </div>
-      {/* Horizon */}
-      <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: '35%', height: 1,
-        background: palette.accent, opacity: 0.6,
-        boxShadow: `0 0 40px 8px ${palette.glow}`,
-        animation: 'horizon-glow 3s ease-in-out infinite',
-      }} />
+
       {/* Floor grid */}
       <div style={{
         position: 'absolute', bottom: 0, left: '-20%', right: '-20%', height: '40%',

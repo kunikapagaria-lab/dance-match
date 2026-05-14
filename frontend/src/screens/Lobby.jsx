@@ -1,18 +1,15 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 import { useGame } from '../App.jsx';
 import socket from '../socket.js';
 import '../styles/neon.css';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
 
-const LEVEL_INFO = [
-  { id: 1, name: 'Groove Starter', bpm: 85,  diff: 'Beginner' },
-  { id: 2, name: 'Street Heat',    bpm: 100, diff: 'Easy'     },
-  { id: 3, name: 'Neon Pulse',     bpm: 118, diff: 'Medium'   },
-  { id: 4, name: 'Rhythm Riot',    bpm: 128, diff: 'Hard'     },
-  { id: 5, name: 'Pro Breakdown',  bpm: 140, diff: 'Expert'   },
-];
+function mins(s) {
+  const m = Math.floor(s / 60);
+  const secs = Math.floor(s % 60);
+  return `${m}:${secs.toString().padStart(2, '0')}`;
+}
 
 function NeonInput({ value, onChange, placeholder, maxLength, style = {} }) {
   return (
@@ -78,10 +75,9 @@ function AccentBtn({ children, onClick, disabled, outline, style = {} }) {
 
 export default function Lobby() {
   const { gameState, setGameState } = useGame();
-  const navigate = useNavigate();
   const { players, roomCode, playerId, isHost, level } = gameState;
 
-  const [phase, setPhase] = useState('enter'); // 'enter' | 'room'
+  const [phase, setPhase] = useState(roomCode ? 'room' : 'enter'); // 'enter' | 'room'
   const [nameInput, setNameInput] = useState('');
   const [codeInput, setCodeInput] = useState('');
 
@@ -92,8 +88,16 @@ export default function Lobby() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadError, setUploadError]   = useState('');
   const [customLevelId, setCustomLevelId] = useState(null);
+  const [savedLevels, setSavedLevels] = useState([]);
   const fileRef  = useRef(null);
   const pollRef2 = useRef(null);
+
+  useEffect(() => {
+    fetch(`${SERVER_URL}/custom-levels`)
+      .then(r => r.json())
+      .then(data => setSavedLevels(Array.isArray(data) ? data.filter(l => l.videoFile) : []))
+      .catch(() => {});
+  }, []);
 
   function startUploadPoll(jobId) {
     pollRef2.current = setInterval(async () => {
@@ -148,98 +152,88 @@ export default function Lobby() {
     socket.emit('set_level', { level: id });
   }
 
+  async function handleDeleteVideo(e, id) {
+    e.stopPropagation();
+    if (!isHost) return;
+    if (!window.confirm('Are you sure you want to delete this video?')) return;
+    try {
+      const res = await fetch(`${SERVER_URL}/level/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSavedLevels(prev => prev.filter(l => l.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete video', err);
+    }
+  }
+
   const me = players.find(p => p.id === playerId);
   const allReady = players.length >= 1 && players.every(p => p.ready);
 
   // ── Enter phase ─────────────────────────────────────────────────────────
   if (phase === 'enter') {
     return (
-      <div style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <button 
-          onClick={() => navigate('/')}
-          style={{
-            position: 'absolute', top: 32, left: 32, zIndex: 100,
-            background: 'transparent', border: 'none', color: 'var(--accent)',
-            fontFamily: 'Audiowide, cursive', fontSize: 12, letterSpacing: '0.2em',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-            padding: '10px 16px', opacity: 0.8, transition: 'opacity 200ms'
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = 1}
-          onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
-        >
-          <span>←</span>
-          <span>BACK</span>
-        </button>
-        <Card style={{ width: '100%', maxWidth: 440 }}>
-          <div className="font-body font-semibold mb-1" style={{ fontSize: 11, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8 }}>MULTIPLAYER</div>
-          <h2 className="font-display mb-8" style={{ fontSize: 28, color: 'white', margin: '0 0 32px' }}>Join the Battle</h2>
+      <div style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 20px' }}>
+        <div style={{ width: '100%', maxWidth: 500 }}>
+          <div className="font-body font-semibold mb-2" style={{ fontSize: 14, letterSpacing: '0.4em', color: 'var(--accent)', opacity: 0.8, textAlign: 'center' }}>MULTIPLAYER</div>
+          <h2 className="font-display mb-10" style={{ fontSize: 48, color: 'white', margin: '0 0 48px', textAlign: 'center', textShadow: '0 0 30px var(--glow-soft)' }}>Join the Battle</h2>
 
-          <div className="mb-4">
-            <label className="font-body font-semibold block mb-2" style={{ fontSize: 11, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.5)' }}>YOUR NAME</label>
-            <NeonInput value={nameInput} onChange={e => setNameInput(e.target.value)} placeholder="Enter your name" maxLength={20} />
+          <div className="mb-6">
+            <label className="font-body font-semibold block mb-3" style={{ fontSize: 13, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.6)' }}>YOUR NAME</label>
+            <NeonInput 
+              value={nameInput} 
+              onChange={e => setNameInput(e.target.value)} 
+              placeholder="Enter your name" 
+              maxLength={20} 
+              style={{ fontSize: 18, padding: '16px 20px', backgroundColor: 'rgba(0,0,0,0.6)' }}
+            />
           </div>
 
-          <AccentBtn onClick={handleCreate} disabled={!nameInput.trim()} style={{ width: '100%', marginBottom: 20 }}>
+          <AccentBtn onClick={handleCreate} disabled={!nameInput.trim()} style={{ width: '100%', marginBottom: 32, fontSize: 15, padding: '18px' }}>
             CREATE ROOM
           </AccentBtn>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
             <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
-            <span className="font-body" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em' }}>OR JOIN</span>
+            <span className="font-body" style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.3em' }}>OR JOIN</span>
             <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 12 }}>
             <NeonInput
               value={codeInput}
               onChange={e => setCodeInput(e.target.value.toUpperCase())}
               placeholder="ROOM CODE"
               maxLength={4}
-              style={{ fontFamily: 'Audiowide, cursive', letterSpacing: '0.4em', textAlign: 'center', fontSize: 18 }}
+              style={{ flex: 1, fontFamily: 'Audiowide, cursive', letterSpacing: '0.5em', textAlign: 'center', fontSize: 24, padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)' }}
             />
-            <AccentBtn onClick={handleJoin} disabled={!nameInput.trim() || codeInput.length !== 4}>
+            <AccentBtn onClick={handleJoin} disabled={!nameInput.trim() || codeInput.length !== 4} style={{ padding: '16px 40px', fontSize: 15 }}>
               JOIN
             </AccentBtn>
           </div>
-        </Card>
+        </div>
       </div>
     );
   }
 
   // ── Room phase ───────────────────────────────────────────────────────────
   return (
-    <div style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', overflow: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
-      <button 
-        onClick={() => navigate('/')}
-        style={{
-          position: 'absolute', top: 32, left: 32, zIndex: 100,
-          background: 'transparent', border: 'none', color: 'var(--accent)',
-          fontFamily: 'Audiowide, cursive', fontSize: 12, letterSpacing: '0.2em',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 16px', opacity: 0.8, transition: 'opacity 200ms'
-        }}
-        onMouseEnter={e => e.currentTarget.style.opacity = 1}
-        onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
-      >
-        <span>←</span>
-        <span>BACK</span>
-      </button>
-      <div style={{ width: '100%', maxWidth: 900, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+    <div className="no-scrollbar" style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 20px' }}>
+      <div style={{ width: '100%', maxWidth: 1200, display: 'flex', gap: 60, flexShrink: 0, paddingBottom: 40, flexWrap: 'wrap' }}>
 
         {/* Left: Room code + Players */}
-        <Card style={{ flex: '0 0 300px', minWidth: 260 }}>
+        <div style={{ flex: '0 0 350px', minWidth: 300, display: 'flex', flexDirection: 'column', marginTop: '2vh' }}>
           {/* Room code */}
-          <div className="font-body font-semibold mb-1" style={{ fontSize: 11, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8 }}>ROOM CODE</div>
-          <div className="font-display" style={{ fontSize: 40, color: 'var(--accent)', letterSpacing: '0.4em', textShadow: '0 0 20px var(--glow)', marginBottom: 4 }}>
+          <div className="font-body font-semibold mb-1" style={{ fontSize: 12, letterSpacing: '0.4em', color: 'var(--accent)', opacity: 0.8 }}>ROOM CODE</div>
+          <div className="font-display" style={{ fontSize: 48, color: 'var(--accent)', letterSpacing: '0.4em', textShadow: '0 0 30px var(--glow)', marginBottom: 4 }}>
             {roomCode}
           </div>
-          <p className="font-body mb-6" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em' }}>Share this code to invite players</p>
+          <p className="font-body mb-6" style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em' }}>Share this code to invite players</p>
 
           {/* Players */}
-          <div className="font-body font-semibold mb-3" style={{ fontSize: 11, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.5)' }}>
+          <div className="font-body font-semibold mb-4" style={{ fontSize: 13, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.5)' }}>
             PLAYERS ({players.length}/4)
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 40 }}>
             {players.map(p => (
               <div key={p.id} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
@@ -267,7 +261,7 @@ export default function Lobby() {
 
           {/* Actions */}
           {!me?.ready && (
-            <AccentBtn onClick={() => socket.emit('player_ready')} style={{ width: '100%', marginBottom: 8 }}>
+            <AccentBtn onClick={() => socket.emit('player_ready')} style={{ width: '100%', marginBottom: 8, padding: '18px', fontSize: 16 }}>
               I'M READY
             </AccentBtn>
           )}
@@ -281,7 +275,7 @@ export default function Lobby() {
             </div>
           )}
           {isHost && allReady && (
-            <AccentBtn onClick={() => socket.emit('go_to_countdown')} style={{ width: '100%' }}>
+            <AccentBtn onClick={() => socket.emit('go_to_countdown')} style={{ width: '100%', padding: '18px', fontSize: 16 }}>
               START GAME
             </AccentBtn>
           )}
@@ -290,40 +284,72 @@ export default function Lobby() {
               {players.length < 2 ? 'Share the code to add players' : 'Waiting for all players to ready up…'}
             </p>
           )}
-        </Card>
+        </div>
 
         {/* Right: Level selector */}
-        <Card style={{ flex: 1, minWidth: 260 }}>
-          <div className="font-body font-semibold mb-1" style={{ fontSize: 11, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8 }}>
+        <div style={{ flex: 1, minWidth: 350, display: 'flex', flexDirection: 'column', marginTop: '2vh' }}>
+          <div className="font-body font-semibold mb-1" style={{ fontSize: 13, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8 }}>
             SELECT LEVEL {!isHost && <span style={{ opacity: 0.5 }}>(host picks)</span>}
           </div>
-          <h3 className="font-display mb-6" style={{ fontSize: 20, color: 'white', margin: '0 0 20px' }}>Battle Arena</h3>
+          <h3 className="font-display mb-4" style={{ fontSize: 20, color: 'white', margin: '0 0 16px' }}>Battle Arena</h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-            {LEVEL_INFO.map(l => (
-              <button key={l.id} onClick={() => handleSetLevel(l.id)} disabled={!isHost}
+          <div className="custom-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 14, maxHeight: '40vh', overflowY: 'auto', paddingRight: 4, paddingBottom: 4, marginBottom: 20, width: '100%' }}>
+            {savedLevels.length === 0 && (
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No saved videos. Upload one below!</p>
+            )}
+            {savedLevels.map(sv => (
+              <button key={sv.id} onClick={() => handleSetLevel(sv.id)} disabled={!isHost}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 14,
-                  background: level === l.id ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.35)',
-                  border: `1.5px solid ${level === l.id ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`,
-                  color: 'white', padding: '14px 18px',
-                  cursor: isHost ? 'pointer' : 'default',
-                  transition: 'all 200ms',
-                  boxShadow: level === l.id ? '0 0 20px var(--glow-soft)' : 'none',
+                  display: 'flex', flexDirection: 'column',
+                  background: level === sv.id ? 'rgba(var(--accent-rgb,255,31,61),0.15)' : 'rgba(0,0,0,0.4)',
+                  border: `2px solid ${level === sv.id ? 'var(--accent)' : 'rgba(255,255,255,0.12)'}`,
+                  borderRadius: '12px',
+                  color: 'white', padding: 0, cursor: isHost ? 'pointer' : 'default',
+                  transition: 'all 200ms', overflow: 'hidden',
+                  boxShadow: level === sv.id ? '0 0 20px var(--glow-soft)' : 'none'
                 }}>
-                <span className="font-display" style={{ fontSize: 22, color: level === l.id ? 'var(--accent)' : 'rgba(255,255,255,0.25)', minWidth: 28 }}>{l.id}</span>
-                <span style={{ flex: 1, textAlign: 'left' }}>
-                  <span className="font-display block" style={{ fontSize: 14 }}>{l.name}</span>
-                  <span className="font-body" style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.15em' }}>{l.bpm} BPM · {l.diff}</span>
-                </span>
-                {level === l.id && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }} />}
+                
+                <div style={{ width: '100%', aspectRatio: '16/9', backgroundColor: '#000', position: 'relative', overflow: 'hidden' }}>
+                  {isHost && (
+                    <button 
+                      onClick={(e) => handleDeleteVideo(e, sv.id)}
+                      style={{
+                        position: 'absolute', top: 4, right: 4, zIndex: 10,
+                        background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '50%', width: 24, height: 24,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'white', cursor: 'pointer', transition: 'all 200ms',
+                        backdropFilter: 'blur(4px)', fontSize: 12
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,31,61,0.8)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                      title="Delete Video"
+                    >✕</button>
+                  )}
+                  {sv.type === 'youtube' && sv.videoId ? (
+                    <img src={`https://img.youtube.com/vi/${sv.videoId}/mqdefault.jpg`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Thumbnail" />
+                  ) : (
+                    <video src={`${SERVER_URL}/video/${sv.id}#t=0.5`} preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
+                  )}
+                  {sv.duration > 0 && (
+                    <span className="font-display" style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.85)', padding: '2px 4px', borderRadius: '4px', fontSize: 10, color: 'var(--accent)' }}>
+                      {mins(sv.duration)}
+                    </span>
+                  )}
+                </div>
+                
+                <div style={{ padding: '8px 10px', width: '100%', textAlign: 'left' }}>
+                  <span className="font-body" style={{ display: 'block', fontSize: 12, opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={sv.videoFile || sv.id}>
+                    {sv.videoFile || sv.id}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
 
           {/* Custom video upload */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-            <div className="font-body" style={{ fontSize: 11, letterSpacing: '0.3em', color: 'var(--accent)', opacity: 0.7, marginBottom: 10 }}>CUSTOM VIDEO</div>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, width: '100%' }}>
+            <div className="font-body" style={{ fontSize: 13, letterSpacing: '0.3em', color: 'var(--accent)', opacity: 0.7, marginBottom: 10 }}>CUSTOM VIDEO</div>
 
             {isHost && !uploading && !customLevelId && (
               <div style={{ display: 'flex', gap: 8 }}>
@@ -343,8 +369,8 @@ export default function Lobby() {
                 <button onClick={handleVideoUpload} disabled={!uploadFile || !isHost} style={{
                   background: !uploadFile ? 'rgba(255,255,255,0.06)' : 'var(--accent)',
                   color: !uploadFile ? 'rgba(255,255,255,0.3)' : 'black', border: 'none',
-                  padding: '10px 14px', cursor: !uploadFile ? 'not-allowed' : 'pointer',
-                  fontFamily: 'Audiowide,cursive', fontSize: 10, letterSpacing: '0.1em',
+                  padding: '12px 18px', cursor: !uploadFile ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Audiowide,cursive', fontSize: 11, letterSpacing: '0.1em',
                   transition: 'all 200ms',
                 }}>EXTRACT</button>
               </div>
@@ -384,7 +410,7 @@ export default function Lobby() {
               <p className="font-body" style={{ fontSize: 11, color: 'var(--accent)', opacity: 0.7 }}>Host selected a custom video track.</p>
             )}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

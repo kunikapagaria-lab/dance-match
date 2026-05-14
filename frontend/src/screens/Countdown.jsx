@@ -139,7 +139,10 @@ export default function Countdown() {
           />
           {/* Scanning Animation overlay */}
           {countdownValue !== null && countdownValue !== undefined && (
-            <div className="scanner-line" />
+            <>
+              <div className="scanner-line" />
+              <div className="scanner-grid" />
+            </>
           )}
           {/* Corner brackets */}
           {['tl','tr','bl','br'].map(p => (

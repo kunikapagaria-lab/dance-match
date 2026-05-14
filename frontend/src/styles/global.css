@@ -162,47 +162,21 @@ h2 {
 
 /* ── Beat indicator ───────────────────────────────────────────────────────── */
 .beat-indicator {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.45rem 1rem;
-  background: rgba(0,0,0,0.6);
-}
-
-.beat-bar-track {
-  flex: 1;
-  height: 6px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 99px;
-  position: relative;
-  overflow: visible;
-}
-
-.beat-bar-fill {
+  width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, var(--accent, #ff1f3d), var(--accent-soft, #ff5c70));
-  border-radius: 99px;
-  transition: width 0.08s linear;
-  box-shadow: 0 0 10px var(--glow, rgba(255,30,60,0.6));
 }
 
-.beat-pulse {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 14px;
-  height: 14px;
-  background: var(--accent, #ff1f3d);
-  border-radius: 50%;
-  box-shadow: 0 0 14px var(--accent, #ff1f3d), 0 0 28px var(--glow, rgba(255,30,60,0.5));
-  transition: left 0.08s linear;
+.beat-bar-track.seamless {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  overflow: hidden;
 }
 
-.beat-count {
-  font-family: 'Audiowide', cursive;
-  font-size: 0.72rem;
-  color: var(--accent, #ff1f3d);
-  min-width: 60px;
-  text-align: right;
-  text-shadow: 0 0 8px var(--glow, rgba(255,30,60,0.5));
+.beat-bar-fill.seamless {
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 20px var(--accent), 0 0 40px var(--glow);
+  border-radius: 0;
+  transition: width 0.1s linear;
 }

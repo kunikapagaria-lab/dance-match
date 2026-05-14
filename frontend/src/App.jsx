@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import socket from './socket.js';
 import { AVATARS } from './data/avatars.js';
 import NeonBackground from './components/NeonBackground.jsx';
@@ -12,6 +12,29 @@ import Results from './screens/Results.jsx';
 
 export const GameContext = createContext(null);
 export function useGame() { return useContext(GameContext); }
+
+function BackButton() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  if (location.pathname === '/' || location.pathname === '/game') return null;
+  return (
+    <button 
+      onClick={() => navigate(-1)}
+      style={{
+        position: 'absolute', top: 20, left: 20, zIndex: 9999,
+        background: 'rgba(0,0,0,0.6)', border: '1px solid var(--accent)',
+        color: 'var(--accent)', padding: '8px 16px', borderRadius: '8px',
+        fontFamily: 'Audiowide, cursive', cursor: 'pointer',
+        backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: 8,
+        transition: 'all 200ms', boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255, 31, 61, 0.2)'; e.currentTarget.style.boxShadow = '0 0 20px var(--glow-soft)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; e.currentTarget.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)'; }}
+    >
+      <span style={{ fontSize: '1.2em', transform: 'translateY(-1px)' }}>←</span> BACK
+    </button>
+  );
+}
 
 export default function App() {
   const navigate = useNavigate();
@@ -72,6 +95,13 @@ export default function App() {
     socket.on('game_over', ({ champion, finalBracket }) => {
       setGameState(s => ({ ...s, champion, bracket: finalBracket }));
     });
+    socket.on('navigate_lobby', () => {
+      navigate('/lobby');
+    });
+    socket.on('tournament_reset', () => {
+      setGameState(s => ({ ...s, rankings: [], bracket: [], champion: null, round: 0, levelData: null }));
+      navigate('/lobby');
+    });
     socket.on('join_error', ({ message }) => alert(`Could not join room: ${message}`));
 
     return () => {
@@ -100,6 +130,7 @@ export default function App() {
   return (
     <GameContext.Provider value={ctx}>
       <NeonBackground />
+      <BackButton />
       <Routes>
         <Route path="/"           element={<LandingPage />} />
         <Route path="/solo-setup" element={<SoloSetup />} />

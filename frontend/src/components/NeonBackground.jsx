@@ -48,12 +48,7 @@ export default function NeonBackground() {
         transformOrigin: 'bottom',
       }} />
 
-      {/* Horizon glow */}
-      <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: '33%', height: 1,
-        background: palette.accent, opacity: 0.5,
-        boxShadow: `0 0 30px 6px ${palette.glow}`,
-      }} />
+
 
       {/* Particles */}
       {particles.map((p, i) => (

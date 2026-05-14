@@ -56,7 +56,7 @@ function CharacterFrame({ parallax }) {
   );
 }
 
-export default function CharacterZone({ avatar, parallax, swapping, onSwap, style = {} }) {
+export default function CharacterZone({ avatar, parallax, swapping, onSwap }) {
   const tx = parallax.x * 42, ty = parallax.y * 26;
   const ry = parallax.x * -4, rx = parallax.y * 3;
   const useFallback = avatar.glb.startsWith('/models/');
@@ -65,7 +65,6 @@ export default function CharacterZone({ avatar, parallax, swapping, onSwap, styl
     <div style={{
       position: 'absolute', right: 56, top: '8%', bottom: '12%', width: '48%',
       perspective: '1400px', perspectiveOrigin: '50% 40%', zIndex: 10,
-      ...style
     }}>
       {/* Breakout glow above frame */}
       <div style={{
@@ -87,10 +86,10 @@ export default function CharacterZone({ avatar, parallax, swapping, onSwap, styl
           src={useFallback ? FALLBACK_GLB : avatar.glb}
           alt={avatar.name}
           animation-name="Dance"
-          autoplay
-          auto-rotate
-          camera-controls
-          disable-zoom
+          autoplay=""
+          auto-rotate=""
+          camera-controls=""
+          disable-zoom=""
           interaction-prompt="none"
           style={{
             width: '100%', height: '100%', background: 'transparent',

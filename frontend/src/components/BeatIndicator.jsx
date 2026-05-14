@@ -35,8 +35,6 @@ export default function BeatIndicator({ total, getElapsed, keyframes, defaultSeg
       const safePct = Math.max(0, Math.min(100, pct));
       if (fillRef.current) fillRef.current.style.width = `${safePct}%`;
       if (pulseRef.current) pulseRef.current.style.left = `${safePct}%`;
-      if (countRef.current) countRef.current.innerText = `${currentDisplay > 0 ? currentDisplay : '—'} / ${total}`;
-
       raf = requestAnimationFrame(tick);
     }
     
@@ -46,12 +44,8 @@ export default function BeatIndicator({ total, getElapsed, keyframes, defaultSeg
 
   return (
     <div className="beat-indicator">
-      <div className="beat-bar-track">
-        <div ref={fillRef} className="beat-bar-fill" style={{ width: '0%' }} />
-        <div ref={pulseRef} className="beat-pulse" style={{ left: '0%' }} />
-      </div>
-      <div className="beat-count" ref={countRef}>
-        — / {total}
+      <div className="beat-bar-track seamless">
+        <div ref={fillRef} className="beat-bar-fill seamless" style={{ width: '0%' }} />
       </div>
     </div>
   );
