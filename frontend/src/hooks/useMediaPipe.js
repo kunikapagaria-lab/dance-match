@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export default function useMediaPipe({ videoRef, onResults, enabled = true, fps = 15 }) {
+export default function useMediaPipe({ videoRef, onResults, enabled = true, fps = 15, onStream }) {
   const poseRef = useRef(null);
   const rafRef = useRef(null);
   const streamRef = useRef(null);
@@ -28,6 +28,7 @@ export default function useMediaPipe({ videoRef, onResults, enabled = true, fps 
       if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
 
       streamRef.current = stream;
+      onStream?.(stream);
       const video = videoRef.current;
       video.srcObject = stream;
       video.playsInline = true;
@@ -94,5 +95,5 @@ export default function useMediaPipe({ videoRef, onResults, enabled = true, fps 
     };
   }, [enabled]);
 
-  return { status };
+  return { status, streamRef };
 }

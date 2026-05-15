@@ -10,7 +10,7 @@ const STATUS_LABEL = {
   error:      'Camera error — check permissions',
 };
 
-export default function PlayerCamera({ onLandmarks, onBeat, currentBeat, currentKeyframe, liveScore, totalScore, fps = 15 }) {
+export default function PlayerCamera({ onLandmarks, onBeat, currentBeat, currentKeyframe, liveScore, totalScore, fps = 15, onStream }) {
   const videoRef = useRef(null);
   const overlayCanvasRef = useRef(null);
   const [landmarks, setLandmarks] = useState(null);
@@ -22,7 +22,7 @@ export default function PlayerCamera({ onLandmarks, onBeat, currentBeat, current
     if (lms) onLandmarks?.(lms);
   }, [onLandmarks]);
 
-  const { status } = useMediaPipe({ videoRef, onResults: handleResults, enabled: true, fps });
+  const { status } = useMediaPipe({ videoRef, onResults: handleResults, enabled: true, fps, onStream });
 
   // Fire onBeat each time the beat number advances
   useEffect(() => {
