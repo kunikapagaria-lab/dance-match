@@ -63,11 +63,15 @@ export default function useMediaPipe({ videoRef, onResults, enabled = true }) {
 
       poseRef.current = pose;
 
-      // 3. rAF frame loop — send each frame to the pose estimator
+      // 3. rAF frame loop — capped at 15 FPS to keep CPU free for video + rendering
       let busy = false;
-      async function sendFrame() {
+      let lastSent = 0;
+      const FRAME_MS = 1000 / 15;
+
+      async function sendFrame(now) {
         if (cancelled) return;
-        if (!busy && video.readyState >= 2 && !video.paused) {
+        if (!busy && now - lastSent >= FRAME_MS && video.readyState >= 2 && !video.paused) {
+          lastSent = now;
           busy = true;
           try { await pose.send({ image: video }); } catch (e) { console.warn('pose.send error:', e); }
           busy = false;

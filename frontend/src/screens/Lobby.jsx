@@ -81,6 +81,7 @@ export default function Lobby() {
   const [phase, setPhase] = useState(roomCode ? 'room' : 'enter'); // 'enter' | 'room'
   const [nameInput, setNameInput] = useState('');
   const [codeInput, setCodeInput] = useState('');
+  const [joinError, setJoinError] = useState('');
 
   const [uploadFile, setUploadFile] = useState(null);
   const [extracting, setExtracting] = useState(false);
@@ -88,6 +89,15 @@ export default function Lobby() {
   const [customLevelId, setCustomLevelId] = useState(null);
   const [savedLevels, setSavedLevels] = useState([]);
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    const onJoinError = ({ message }) => {
+      setPhase('enter');
+      setJoinError(message || 'Could not join room. Check the code and try again.');
+    };
+    socket.on('join_error', onJoinError);
+    return () => socket.off('join_error', onJoinError);
+  }, []);
 
   useEffect(() => {
     fetch(`${SERVER_URL}/custom-levels`)
@@ -116,9 +126,10 @@ export default function Lobby() {
 
   function handleJoin() {
     if (!nameInput.trim() || codeInput.length !== 4) return;
+    setJoinError('');
     setGameState(s => ({ ...s, isHost: false }));
     socket.emit('join_room', { code: codeInput.toUpperCase(), name: nameInput.trim(), avatar: 'default' });
-    setPhase('room');
+    socket.once('room_created', () => setPhase('room'));
   }
 
   function handleSetLevel(id) {
@@ -175,7 +186,7 @@ export default function Lobby() {
           <div style={{ display: 'flex', gap: 12 }}>
             <NeonInput
               value={codeInput}
-              onChange={e => setCodeInput(e.target.value.toUpperCase())}
+              onChange={e => { setCodeInput(e.target.value.toUpperCase()); setJoinError(''); }}
               placeholder="ROOM CODE"
               maxLength={4}
               style={{ flex: 1, fontFamily: 'Audiowide, cursive', letterSpacing: '0.5em', textAlign: 'center', fontSize: 24, padding: '16px', backgroundColor: 'rgba(0,0,0,0.6)' }}
@@ -184,6 +195,9 @@ export default function Lobby() {
               JOIN
             </AccentBtn>
           </div>
+          {joinError && (
+            <p style={{ marginTop: 12, fontSize: 13, color: '#f87171', textAlign: 'center', letterSpacing: '0.05em' }}>⚠ {joinError}</p>
+          )}
         </div>
       </div>
     );
