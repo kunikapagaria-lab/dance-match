@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export default function useMediaPipe({ videoRef, onResults, enabled = true }) {
+export default function useMediaPipe({ videoRef, onResults, enabled = true, fps = 15 }) {
   const poseRef = useRef(null);
   const rafRef = useRef(null);
   const streamRef = useRef(null);
@@ -63,10 +63,10 @@ export default function useMediaPipe({ videoRef, onResults, enabled = true }) {
 
       poseRef.current = pose;
 
-      // 3. rAF frame loop — capped at 15 FPS to keep CPU free for video + rendering
+      // 3. rAF frame loop — capped at target FPS to keep CPU free for video + rendering
       let busy = false;
       let lastSent = 0;
-      const FRAME_MS = 1000 / 15;
+      const FRAME_MS = 1000 / fps;
 
       async function sendFrame(now) {
         if (cancelled) return;

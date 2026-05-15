@@ -36,7 +36,10 @@ export default function useWebRTC({ players, playerId, enabled }) {
 
     async function init() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 15, max: 15 } },
+          audio: false,
+        });
         if (cancelled) { stream.getTracks().forEach(t => t.stop()); return; }
         localStreamRef.current = stream;
       } catch (e) {

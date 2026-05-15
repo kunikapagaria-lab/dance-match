@@ -294,7 +294,7 @@ export default function Game() {
                   ref={videoRef}
                   src={levelData.cloudinaryUrl}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  preload="auto" playsInline
+                  preload="auto" playsInline crossOrigin="anonymous"
                 />
                 <div className="video-progress-overlay">
                   <BeatIndicator total={totalBeats} getElapsed={getElapsed} keyframes={keyframes} defaultSegmentDuration={defaultSegmentDuration} />
@@ -343,6 +343,7 @@ export default function Game() {
             currentKeyframe={currentKeyframe}
             liveScore={liveScores[playerId] ?? null}
             totalScore={totalScore}
+            fps={otherPlayers.length > 0 ? 10 : 15}
           />
         </div>
       </div>
