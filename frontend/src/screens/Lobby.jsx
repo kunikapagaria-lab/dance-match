@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGame } from '../App.jsx';
 import socket from '../socket.js';
 import VideoExtractor from '../components/VideoExtractor.jsx';
@@ -77,6 +78,7 @@ function AccentBtn({ children, onClick, disabled, outline, style = {} }) {
 export default function Lobby() {
   const { gameState, setGameState } = useGame();
   const { players, roomCode, playerId, isHost, level } = gameState;
+  const navigate = useNavigate();
 
   const [phase, setPhase] = useState(roomCode ? 'room' : 'enter'); // 'enter' | 'room'
   const [nameInput, setNameInput] = useState('');
@@ -135,6 +137,12 @@ export default function Lobby() {
   function handleSetLevel(id) {
     if (!isHost) return;
     socket.emit('set_level', { level: id });
+  }
+
+  function handleLeave() {
+    socket.emit('leave_room');
+    setGameState(s => ({ ...s, roomCode: null, players: [], isHost: false, level: 1 }));
+    navigate('/');
   }
 
   async function handleDeleteVideo(e, id) {
@@ -281,6 +289,20 @@ export default function Lobby() {
               {players.length < 2 ? 'Share the code to add players' : 'Waiting for all players to ready up…'}
             </p>
           )}
+
+          <button
+            onClick={handleLeave}
+            style={{
+              marginTop: 16, width: '100%', background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.4)',
+              padding: '12px', cursor: 'pointer', fontFamily: 'Audiowide, cursive',
+              fontSize: 12, letterSpacing: '0.2em', transition: 'all 200ms',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#f87171'; e.currentTarget.style.color = '#f87171'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+          >
+            LEAVE ROOM
+          </button>
         </div>
 
         {/* Right: Level selector */}

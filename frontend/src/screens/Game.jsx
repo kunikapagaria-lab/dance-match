@@ -177,10 +177,11 @@ export default function Game() {
   }, []);
 
   const handleTogglePause = useCallback(() => {
+    if (!gameState.isHost) return;
     const newPaused = !isPaused;
     setIsPaused(newPaused);
     socket.emit('toggle_pause', { isPaused: newPaused });
-  }, [isPaused]);
+  }, [isPaused, gameState.isHost]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
