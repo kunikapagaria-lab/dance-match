@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGame } from '../App.jsx';
 import socket from '../socket.js';
+import VideoExtractor from '../components/VideoExtractor.jsx';
 import '../styles/neon.css';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
@@ -81,56 +82,29 @@ export default function Lobby() {
   const [nameInput, setNameInput] = useState('');
   const [codeInput, setCodeInput] = useState('');
 
-  // Custom video upload state
-  const [uploadFile, setUploadFile]     = useState(null);
-  const [uploading, setUploading]       = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState('');
-  const [uploadError, setUploadError]   = useState('');
+  const [uploadFile, setUploadFile] = useState(null);
+  const [extracting, setExtracting] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [customLevelId, setCustomLevelId] = useState(null);
   const [savedLevels, setSavedLevels] = useState([]);
-  const fileRef  = useRef(null);
-  const pollRef2 = useRef(null);
+  const fileRef = useRef(null);
 
   useEffect(() => {
     fetch(`${SERVER_URL}/custom-levels`)
       .then(r => r.json())
-      .then(data => setSavedLevels(Array.isArray(data) ? data.filter(l => l.videoFile) : []))
+      .then(data => setSavedLevels(Array.isArray(data) ? data.filter(l => l.cloudinaryUrl) : []))
       .catch(() => {});
   }, []);
 
-  function startUploadPoll(jobId) {
-    pollRef2.current = setInterval(async () => {
-      try {
-        const res  = await fetch(`${SERVER_URL}/job-status/${jobId}`);
-        const data = await res.json();
-        setUploadProgress(data.progress || 0);
-        setUploadStatus(data.message || '');
-        if (data.status === 'done') {
-          clearInterval(pollRef2.current);
-          setUploading(false);
-          setCustomLevelId(data.levelId);
-          handleSetLevel(data.levelId);
-        } else if (data.status === 'error') {
-          clearInterval(pollRef2.current);
-          setUploading(false);
-          setUploadError(data.message || 'Processing failed');
-        }
-      } catch { clearInterval(pollRef2.current); setUploading(false); setUploadError('Lost connection'); }
-    }, 2000);
-  }
-
-  async function handleVideoUpload() {
-    if (!uploadFile || !isHost) return;
-    setUploadError(''); setUploadProgress(0); setUploadStatus('Uploading…'); setUploading(true);
-    try {
-      const form = new FormData();
-      form.append('video', uploadFile);
-      const res  = await fetch(`${SERVER_URL}/upload-video`, { method: 'POST', body: form });
-      const data = await res.json();
-      if (data.error) { setUploadError(data.error); setUploading(false); return; }
-      startUploadPoll(data.jobId);
-    } catch { setUploadError('Upload failed'); setUploading(false); }
+  function handleExtractComplete({ levelId, cloudinaryUrl, duration, originalFilename }) {
+    setExtracting(false);
+    setUploadFile(null);
+    setCustomLevelId(levelId);
+    setSavedLevels(prev => {
+      if (prev.find(l => l.id === levelId)) return prev;
+      return [...prev, { id: levelId, type: 'upload', cloudinaryUrl, duration, originalFilename }];
+    });
+    handleSetLevel(levelId);
   }
 
   function handleCreate() {
@@ -329,7 +303,7 @@ export default function Lobby() {
                   {sv.type === 'youtube' && sv.videoId ? (
                     <img src={`https://img.youtube.com/vi/${sv.videoId}/mqdefault.jpg`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Thumbnail" />
                   ) : (
-                    <video src={`${sv.cloudinaryUrl || `${SERVER_URL}/video/${sv.id}`}#t=0.5`} preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
+                    <video src={`${sv.cloudinaryUrl}#t=0.5`} preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
                   )}
                   {sv.duration > 0 && (
                     <span className="font-display" style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.85)', padding: '2px 4px', borderRadius: '4px', fontSize: 10, color: 'var(--accent)' }}>
@@ -339,8 +313,8 @@ export default function Lobby() {
                 </div>
                 
                 <div style={{ padding: '8px 10px', width: '100%', textAlign: 'left' }}>
-                  <span className="font-body" style={{ display: 'block', fontSize: 12, opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={sv.videoFile || sv.id}>
-                    {sv.videoFile || sv.id}
+                  <span className="font-body" style={{ display: 'block', fontSize: 12, opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={sv.originalFilename || sv.id}>
+                    {sv.originalFilename || sv.id}
                   </span>
                 </div>
               </button>
@@ -351,7 +325,7 @@ export default function Lobby() {
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, width: '100%' }}>
             <div className="font-body" style={{ fontSize: 13, letterSpacing: '0.3em', color: 'var(--accent)', opacity: 0.7, marginBottom: 10 }}>CUSTOM VIDEO</div>
 
-            {isHost && !uploading && !customLevelId && (
+            {isHost && !extracting && (
               <div style={{ display: 'flex', gap: 8 }}>
                 <input ref={fileRef} type="file" accept="video/*" style={{ display: 'none' }}
                   onChange={e => { setUploadFile(e.target.files?.[0] || null); setUploadError(''); }} />
@@ -366,7 +340,7 @@ export default function Lobby() {
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)')}>
                   {uploadFile ? `📁 ${uploadFile.name}` : 'Choose video…'}
                 </button>
-                <button onClick={handleVideoUpload} disabled={!uploadFile || !isHost} style={{
+                <button onClick={() => { setUploadError(''); setExtracting(true); }} disabled={!uploadFile} style={{
                   background: !uploadFile ? 'rgba(255,255,255,0.06)' : 'var(--accent)',
                   color: !uploadFile ? 'rgba(255,255,255,0.3)' : 'black', border: 'none',
                   padding: '12px 18px', cursor: !uploadFile ? 'not-allowed' : 'pointer',
@@ -376,35 +350,16 @@ export default function Lobby() {
               </div>
             )}
 
-            {uploading && (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span className="font-body" style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{uploadStatus || 'Processing…'}</span>
-                  <span className="font-body" style={{ fontSize: 11, color: 'var(--accent)' }}>{uploadProgress}%</span>
-                </div>
-                <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', background: 'var(--accent)', width: `${uploadProgress}%`, transition: 'width 0.4s ease', borderRadius: 2 }} />
-                </div>
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Don't close this tab.</p>
-              </div>
+            {extracting && uploadFile && (
+              <VideoExtractor
+                file={uploadFile}
+                onComplete={handleExtractComplete}
+                onError={(msg) => { setExtracting(false); setUploadError(msg); }}
+                onCancel={() => { setExtracting(false); setUploadFile(null); }}
+              />
             )}
 
             {uploadError && <p style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>⚠ {uploadError}</p>}
-
-            {customLevelId && !uploading && (
-              <button onClick={() => handleSetLevel(customLevelId)} style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                background: level === customLevelId ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.35)',
-                border: `1.5px solid ${level === customLevelId ? 'var(--accent)' : 'rgba(255,255,255,0.15)'}`,
-                color: 'white', padding: '12px 14px', cursor: isHost ? 'pointer' : 'default',
-                boxShadow: level === customLevelId ? '0 0 20px var(--glow-soft)' : 'none',
-                transition: 'all 200ms',
-              }}>
-                <span style={{ fontSize: 16 }}>📁</span>
-                <span className="font-body" style={{ flex: 1, fontSize: 13 }}>Custom Video</span>
-                {level === customLevelId && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }} />}
-              </button>
-            )}
 
             {!isHost && typeof level === 'string' && level.startsWith('upload_') && (
               <p className="font-body" style={{ fontSize: 11, color: 'var(--accent)', opacity: 0.7 }}>Host selected a custom video track.</p>

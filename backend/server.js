@@ -4,20 +4,12 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
+const { createClient } = require('@supabase/supabase-js');
 const { createRoom, getRoom, joinRoom, setLevel, setReady, startRound, submitScore, removePlayer, getRoomByPlayer } = require('./rooms');
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '30mb' }));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -26,31 +18,10 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 4000;
 
-const PYTHON_BIN = process.env.PYTHON_BIN || 'python3';
-const EXTRACT_SCRIPT = path.join(__dirname, 'extract_poses.py');
-const CUSTOM_DIR = path.join(__dirname, 'dance_data', 'custom');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-
-fs.mkdirSync(CUSTOM_DIR, { recursive: true });
-fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-
-// Multer: save uploaded videos to uploads/ with their level ID as filename
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, UPLOADS_DIR),
-  filename: (_, file, cb) => {
-    const jobId = Math.random().toString(36).slice(2, 10);
-    const ext = path.extname(file.originalname) || '.mp4';
-    cb(null, `upload_${jobId}${ext}`);
-  },
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2 GB
-  fileFilter: (_, file, cb) => {
-    const ok = file.mimetype.startsWith('video/');
-    cb(ok ? null : new Error('Only video files are allowed'), ok);
-  },
-});
+const supabase = createClient(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || '',
+);
 
 // Pre-built levels 1-5
 const danceData = {};
@@ -63,316 +34,88 @@ for (let i = 1; i <= 5; i++) {
   }
 }
 
-// Custom YouTube levels (in-memory, also persisted to disk)
+// Custom levels in memory — restored from Supabase on startup
 const customLevels = {};
-// Load any previously processed custom levels from disk on startup
-try {
-  for (const file of fs.readdirSync(CUSTOM_DIR)) {
-    if (!file.endsWith('.json')) continue;
-    const id = file.replace('.json', '');
-    try {
-      customLevels[id] = JSON.parse(fs.readFileSync(path.join(CUSTOM_DIR, file), 'utf8'));
-    } catch (_) { /* skip corrupt files */ }
-  }
-} catch (_) { /* custom dir doesn't exist yet */ }
 
-// Restore any levels saved to Cloudinary that aren't on local disk
-async function restoreFromCloudinary() {
-  if (!process.env.CLOUDINARY_CLOUD_NAME) return;
+async function restoreFromSupabase() {
+  if (!process.env.SUPABASE_URL) return;
   try {
-    const result = await cloudinary.api.resources({
-      type: 'upload', resource_type: 'raw', prefix: 'dance_levels/', max_results: 500,
-    });
-    for (const resource of result.resources) {
-      const levelId = path.basename(resource.public_id);
-      if (customLevels[levelId]) continue;
-      const resp = await fetch(resource.secure_url);
-      const data = await resp.json();
-      customLevels[levelId] = data;
-      console.log(`Restored level ${levelId} from Cloudinary`);
-    }
+    const { data, error } = await supabase.from('custom_levels').select('id, data');
+    if (error) throw error;
+    for (const row of data) customLevels[row.id] = row.data;
+    console.log(`Restored ${data.length} levels from Supabase`);
   } catch (e) {
-    console.warn('Could not restore from Cloudinary:', e.message);
+    console.warn('Could not restore from Supabase:', e.message);
   }
 }
-restoreFromCloudinary();
-
-// In-memory processing jobs: jobId -> { status, progress, message, levelId, videoId, error }
-const jobs = new Map();
-
-function generateJobId() {
-  return Math.random().toString(36).slice(2, 10);
-}
+restoreFromSupabase();
 
 // ── REST Endpoints ─────────────────────────────────────────────────────────
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
-// Existing + custom level fetch
+// Fetch a level's full pose data (built-in or custom)
 app.get('/level/:id', (req, res) => {
   const id = req.params.id;
-  // Numeric built-in level
   const numId = parseInt(id);
   if (!isNaN(numId) && danceData[numId]) return res.json(danceData[numId]);
-  // Custom YouTube level
   if (customLevels[id]) return res.json(customLevels[id]);
-  // Try loading from disk (race-condition safety)
-  const diskPath = path.join(CUSTOM_DIR, `${id}.json`);
-  if (fs.existsSync(diskPath)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(diskPath, 'utf8'));
-      customLevels[id] = data;
-      return res.json(data);
-    } catch (_) {}
-  }
   res.status(404).json({ error: 'Level not found' });
 });
 
-// Get all custom uploaded levels
+// List all custom levels (metadata only — no frames)
 app.get('/custom-levels', (req, res) => {
-  const levelsList = Object.entries(customLevels).map(([id, data]) => ({
+  const list = Object.entries(customLevels).map(([id, data]) => ({
     id,
-    type: data.type || (data.cloudinaryUrl || data.videoFile ? 'upload' : 'youtube'),
-    videoFile: data.videoFile || null,
+    type: data.type || 'upload',
     cloudinaryUrl: data.cloudinaryUrl || null,
+    originalFilename: data.originalFilename || null,
     duration: data.duration || 0,
-    videoId: data.videoId || null,
   }));
-  res.json(levelsList);
+  res.json(list);
+});
+
+// Save a level whose poses were extracted in the browser
+app.post('/save-level', async (req, res) => {
+  const { id, type, duration, fps, frames, cloudinaryUrl, originalFilename } = req.body;
+  if (!id || !Array.isArray(frames) || !cloudinaryUrl) {
+    return res.status(400).json({ error: 'Missing required fields: id, frames, cloudinaryUrl' });
+  }
+
+  const data = {
+    type: type || 'upload',
+    duration: duration || 0,
+    fps: fps || 10,
+    frames,
+    cloudinaryUrl,
+    originalFilename: originalFilename || '',
+  };
+  customLevels[id] = data;
+
+  if (process.env.SUPABASE_URL) {
+    const { error } = await supabase.from('custom_levels').upsert({ id, data });
+    if (error) {
+      console.error('Supabase save error:', error);
+      return res.status(500).json({ error: 'Failed to save level' });
+    }
+  }
+
+  res.json({ success: true, id });
 });
 
 // Delete a custom level
 app.delete('/level/:id', async (req, res) => {
   const id = req.params.id;
-  const levelData = customLevels[id];
+  if (!customLevels[id]) return res.status(404).json({ error: 'Level not found' });
 
-  if (!levelData) return res.status(404).json({ error: 'Level not found' });
+  delete customLevels[id];
 
-  try {
-    const jsonPath = path.join(CUSTOM_DIR, `${id}.json`);
-    if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath);
-
-    if (levelData.videoFile) {
-      const videoPath = path.join(UPLOADS_DIR, levelData.videoFile);
-      if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
-    }
-
-    if (process.env.CLOUDINARY_CLOUD_NAME) {
-      await Promise.allSettled([
-        cloudinary.uploader.destroy(`dance_videos/${id}`, { resource_type: 'video' }),
-        cloudinary.uploader.destroy(`dance_levels/${id}`, { resource_type: 'raw' }),
-      ]);
-    }
-
-    delete customLevels[id];
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete level files' });
-  }
-});
-
-// Start video processing job
-app.post('/process-video', (req, res) => {
-  const { url } = req.body;
-  if (!url || typeof url !== 'string') {
-    return res.status(400).json({ error: 'Missing url in request body' });
+  if (process.env.SUPABASE_URL) {
+    const { error } = await supabase.from('custom_levels').delete().eq('id', id);
+    if (error) console.warn('Supabase delete error:', error.message);
   }
 
-  const youtubePattern = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//;
-  if (!youtubePattern.test(url)) {
-    return res.status(400).json({ error: 'URL must be a YouTube link' });
-  }
-
-  const jobId = generateJobId();
-  const levelId = `yt_${jobId}`;
-  const outputPath = path.join(CUSTOM_DIR, `${levelId}.json`);
-
-  jobs.set(jobId, { status: 'processing', progress: 0, message: 'Starting…', levelId, videoId: null });
-
-  // Spawn Python extraction subprocess
-  const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, url, outputPath, '10'], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, MEDIAPIPE_DISABLE_GPU: '1' },
-  });
-
-  child.stdout.on('data', (chunk) => {
-    const lines = chunk.toString().split('\n').filter(Boolean);
-    const job = jobs.get(jobId);
-    if (!job) return;
-    for (const line of lines) {
-      if (line.startsWith('PROGRESS:')) {
-        job.progress = parseInt(line.slice(9)) || job.progress;
-      } else if (line.startsWith('STATUS:')) {
-        job.message = line.slice(7).trim();
-      }
-    }
-  });
-
-  child.stderr.on('data', (chunk) => {
-    console.error(`[job ${jobId}] stderr:`, chunk.toString());
-  });
-
-  child.on('close', (code) => {
-    const job = jobs.get(jobId);
-    if (!job) return;
-    if (code === 0 && fs.existsSync(outputPath)) {
-      try {
-        const data = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
-        customLevels[levelId] = data;
-        job.status = 'done';
-        job.progress = 100;
-        job.message = 'Done';
-        job.videoId = data.videoId;
-      } catch (e) {
-        job.status = 'error';
-        job.message = 'Failed to parse output JSON';
-      }
-    } else {
-      // Surface the last STATUS:ERROR message if available, otherwise generic
-      const lastMsg = job.message || '';
-      job.status = 'error';
-      job.message = lastMsg.startsWith('ERROR:')
-        ? lastMsg.slice(6).trim()
-        : `Process exited with code ${code}`;
-    }
-  });
-
-  child.on('error', (err) => {
-    const job = jobs.get(jobId);
-    if (job) { job.status = 'error'; job.message = err.message; }
-  });
-
-  res.json({ jobId, levelId });
-});
-
-// Poll job status
-app.get('/job-status/:jobId', (req, res) => {
-  const job = jobs.get(req.params.jobId);
-  if (!job) return res.status(404).json({ error: 'Job not found' });
-  res.json(job);
-});
-
-// Upload a local video file, then run pose extraction on it
-app.post('/upload-video', upload.single('video'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No video file received' });
-
-  const videoPath = req.file.path;
-  const baseName  = path.basename(req.file.filename, path.extname(req.file.filename)); // e.g. upload_abc123
-  const levelId   = baseName;
-  const jobId     = Math.random().toString(36).slice(2, 10);
-  const outputPath = path.join(CUSTOM_DIR, `${levelId}.json`);
-
-  jobs.set(jobId, { status: 'processing', progress: 0, message: 'Starting…', levelId, videoId: null });
-
-  const child = spawn(PYTHON_BIN, [EXTRACT_SCRIPT, videoPath, outputPath, '10'], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, MEDIAPIPE_DISABLE_GPU: '1' },
-  });
-
-  child.stdout.on('data', (chunk) => {
-    const lines = chunk.toString().split('\n').filter(Boolean);
-    const job = jobs.get(jobId);
-    if (!job) return;
-    for (const line of lines) {
-      if (line.startsWith('PROGRESS:')) {
-        job.progress = parseInt(line.slice(9)) || job.progress;
-      } else if (line.startsWith('STATUS:')) {
-        job.message = line.slice(7).trim();
-      }
-    }
-  });
-
-  child.stderr.on('data', (chunk) => {
-    console.error(`[upload job ${jobId}] stderr:`, chunk.toString());
-  });
-
-  child.on('close', async (code) => {
-    const job = jobs.get(jobId);
-    if (!job) return;
-    if (code === 0 && fs.existsSync(outputPath)) {
-      try {
-        const data = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
-
-        if (process.env.CLOUDINARY_CLOUD_NAME) {
-          try {
-            job.message = 'Uploading to cloud…';
-            const videoResult = await cloudinary.uploader.upload(videoPath, {
-              resource_type: 'video',
-              public_id: `dance_videos/${levelId}`,
-              overwrite: true,
-            });
-            data.cloudinaryUrl = videoResult.secure_url;
-            fs.writeFileSync(outputPath, JSON.stringify(data));
-            await cloudinary.uploader.upload(outputPath, {
-              resource_type: 'raw',
-              public_id: `dance_levels/${levelId}`,
-              overwrite: true,
-            });
-            fs.unlinkSync(videoPath);
-          } catch (e) {
-            console.warn('Cloudinary upload failed, falling back to local:', e.message);
-            data.videoFile = req.file.filename;
-          }
-        } else {
-          data.videoFile = req.file.filename;
-        }
-
-        fs.writeFileSync(outputPath, JSON.stringify(data));
-        customLevels[levelId] = data;
-        job.status   = 'done';
-        job.progress = 100;
-        job.message  = 'Done';
-        job.levelId  = levelId;
-      } catch (e) {
-        job.status  = 'error';
-        job.message = 'Failed to parse output JSON';
-      }
-    } else {
-      const lastMsg = job.message || '';
-      job.status  = 'error';
-      job.message = lastMsg.startsWith('ERROR:') ? lastMsg.slice(6).trim() : `Process exited with code ${code}`;
-    }
-  });
-
-  child.on('error', (err) => {
-    const job = jobs.get(jobId);
-    if (job) { job.status = 'error'; job.message = err.message; }
-  });
-
-  res.json({ jobId, levelId });
-});
-
-// Stream an uploaded video file to the browser
-app.get('/video/:levelId', (req, res) => {
-  const level = customLevels[req.params.levelId];
-  if (!level || !level.videoFile) return res.status(404).json({ error: 'Video not found' });
-
-  const filePath = path.join(UPLOADS_DIR, level.videoFile);
-  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Video file missing on disk' });
-
-  const stat = fs.statSync(filePath);
-  const range = req.headers.range;
-
-  if (range) {
-    // Support byte-range requests so the <video> element can seek
-    const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
-    const start = parseInt(startStr, 10);
-    const end   = endStr ? parseInt(endStr, 10) : stat.size - 1;
-    const chunkSize = end - start + 1;
-    res.writeHead(206, {
-      'Content-Range':  `bytes ${start}-${end}/${stat.size}`,
-      'Accept-Ranges':  'bytes',
-      'Content-Length': chunkSize,
-      'Content-Type':   'video/mp4',
-    });
-    fs.createReadStream(filePath, { start, end }).pipe(res);
-  } else {
-    res.writeHead(200, {
-      'Content-Length': stat.size,
-      'Content-Type':   'video/mp4',
-    });
-    fs.createReadStream(filePath).pipe(res);
-  }
+  res.json({ success: true });
 });
 
 // ── Socket.IO ─────────────────────────────────────────────────────────────
@@ -405,6 +148,7 @@ io.on('connection', (socket) => {
     setLevel(room.code, level);
     io.to(room.code).emit('level_changed', { level });
   });
+
   socket.on('reset_tournament', () => {
     const room = getRoomByPlayer(socket.id);
     if (!room || room.host !== socket.id) return;
@@ -438,7 +182,6 @@ io.on('connection', (socket) => {
       io.to(room.code).emit('all_ready', {
         level: levelId,
         audioUrl: levelData?.audioUrl || '',
-        // For YouTube levels, tell clients the videoId so they can embed the player
         videoId: levelData?.videoId || null,
         isYoutube: levelData?.type === 'youtube',
       });
@@ -462,7 +205,6 @@ io.on('connection', (socket) => {
       count -= 1;
       if (count < 0) {
         clearInterval(interval);
-        // 4-second buffer so clients can pre-load and YouTube iframe can initialise
         io.to(room.code).emit('dance_start', { serverTimestamp: Date.now() + 4000 });
       }
     }, 1000);
