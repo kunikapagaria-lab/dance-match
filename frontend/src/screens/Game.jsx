@@ -77,7 +77,7 @@ export default function Game() {
   }, [isYoutube, ytReady, danceStartTime]);
 
   useEffect(() => {
-    if (!isUpload || !danceStartTime || ytStartedRef.current) return;
+    if (!levelData?.cloudinaryUrl || !danceStartTime || ytStartedRef.current) return;
     const el = videoRef.current;
     if (!el) return;
     ytStartedRef.current = true;
@@ -260,12 +260,12 @@ export default function Game() {
       <div className="game-main">
         <div className="reference-panel">
 
-          {isUpload && (levelData?.cloudinaryUrl || levelData?.videoFile) ? (
+          {levelData?.cloudinaryUrl ? (
             <>
               <div className="ref-upload-video">
                 <video
                   ref={videoRef}
-                  src={levelData.cloudinaryUrl || `${SERVER_URL}/video/${level}`}
+                  src={levelData.cloudinaryUrl}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   preload="auto" playsInline
                 />
