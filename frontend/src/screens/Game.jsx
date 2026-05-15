@@ -39,7 +39,8 @@ export default function Game() {
   const [gameOver, setGameOver]     = useState(false);
   const [latestPlayerLandmarks, setLatestPlayerLandmarks] = useState(null);
   const [ytReady, setYtReady]       = useState(false);
-  const [isPaused, setIsPaused]     = useState(false);
+  const [isPaused, setIsPaused]         = useState(false); // global — host controls this
+  const [isLocalPaused, setIsLocalPaused] = useState(false); // local — non-host only
 
   // ── Feedback state ─────────────────────────────────────────────────────
   const [feedbackScore, setFeedbackScore] = useState(null);
@@ -183,11 +184,17 @@ export default function Game() {
     socket.emit('toggle_pause', { isPaused: newPaused });
   }, [isPaused, gameState.isHost]);
 
+  const handleLocalPause = useCallback(() => {
+    if (gameState.isHost) return;
+    setIsLocalPaused(p => !p);
+  }, [gameState.isHost]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && !gameOver) {
         e.preventDefault();
-        handleTogglePause();
+        if (gameState.isHost) handleTogglePause();
+        else handleLocalPause();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -215,46 +222,58 @@ export default function Game() {
       {/* PERFECT screen flash */}
       {screenFlash && <div className="screen-flash" />}
 
-      {/* PAUSED overlay */}
+      {/* PAUSED overlay — global (host) */}
       {isPaused && !gameOver && (
-        <div 
-          className="game-overlay" 
-          style={{ cursor: 'default' }}
-        >
+        <div className="game-overlay" style={{ cursor: 'default' }}>
           <div className="game-overlay-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
             PAUSED
             {gameState.isHost ? (
               <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleTogglePause(); }}
-                  style={{ background: 'var(--accent)', color: 'black', border: 'none', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', transition: 'all 200ms', borderRadius: '4px' }}
+                <button onClick={(e) => { e.stopPropagation(); handleTogglePause(); }}
+                  style={{ background: 'var(--accent)', color: 'black', border: 'none', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', borderRadius: '4px' }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px var(--glow)'}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-                >
-                  PLAY
-                </button>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); navigate(gameState.gameMode === 'solo' ? '/solo-setup' : '/lobby'); }}
-                  style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--accent)', border: '1px solid var(--accent)', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', transition: 'all 200ms', borderRadius: '4px' }}
+                >PLAY</button>
+                <button onClick={(e) => { e.stopPropagation(); navigate(gameState.gameMode === 'solo' ? '/solo-setup' : '/lobby'); }}
+                  style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--accent)', border: '1px solid var(--accent)', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', borderRadius: '4px' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,31,61,0.2)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.6)'}
-                >
-                  NEXT ROUND
-                </button>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); navigate('/'); }}
-                  style={{ background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', transition: 'all 200ms', borderRadius: '4px' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'white'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
-                >
-                  MAIN MENU
-                </button>
+                >NEXT ROUND</button>
+                <button onClick={(e) => { e.stopPropagation(); navigate('/'); }}
+                  style={{ background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', borderRadius: '4px' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                >MAIN MENU</button>
               </div>
             ) : (
               <span style={{ fontSize: '0.45em', letterSpacing: '0.25em', opacity: 0.8, color: 'white', fontFamily: 'Rajdhani, sans-serif' }}>
                 PAUSED BY HOST
               </span>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* LOCAL PAUSED overlay — non-host only, doesn't affect others */}
+      {isLocalPaused && !isPaused && !gameOver && (
+        <div className="game-overlay" style={{ cursor: 'default' }}>
+          <div className="game-overlay-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+            PAUSED
+            <span style={{ fontSize: '0.35em', letterSpacing: '0.2em', opacity: 0.6, color: 'white', fontFamily: 'Rajdhani, sans-serif' }}>
+              GAME IS STILL RUNNING FOR OTHERS
+            </span>
+            <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+              <button onClick={(e) => { e.stopPropagation(); setIsLocalPaused(false); }}
+                style={{ background: 'var(--accent)', color: 'black', border: 'none', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', borderRadius: '4px' }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px var(--glow)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+              >RESUME</button>
+              <button onClick={(e) => { e.stopPropagation(); navigate('/lobby'); }}
+                style={{ background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.3)', padding: '14px 28px', fontSize: 14, fontFamily: 'Audiowide, cursive', cursor: 'pointer', borderRadius: '4px' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+              >GO TO LOBBY</button>
+            </div>
           </div>
         </div>
       )}
