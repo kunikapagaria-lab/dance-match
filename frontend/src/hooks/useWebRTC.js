@@ -1,26 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
 import socket from '../socket.js';
 
-const ICE_SERVERS = [
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
+
+const FALLBACK_ICE = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'turn:openrelay.metered.ca:80',               username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443',              username: 'openrelayproject', credential: 'openrelayproject' },
-  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
 ];
+
+async function fetchIceServers() {
+  try {
+    const r = await fetch(`${SERVER_URL}/ice-servers`);
+    if (r.ok) return await r.json();
+  } catch (_) {}
+  return FALLBACK_ICE;
+}
 
 export default function useWebRTC({ players, playerId, localStreamRef, enabled }) {
   const [remoteStreams, setRemoteStreams] = useState({});
   const peersRef       = useRef({});
-  const iceBufRef      = useRef({}); // buffer ICE candidates before remote desc is set
+  const iceBufRef      = useRef({});
+  const iceServersRef  = useRef(FALLBACK_ICE);
 
   useEffect(() => {
     if (!enabled || !playerId || players.length < 2) return;
     let cancelled = false;
 
-    function createPC(peerId) {
-      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    function createPC(peerId, iceServers = FALLBACK_ICE) {
+      const pc = new RTCPeerConnection({ iceServers });
 
       // Add local tracks from the shared MediaPipe stream
       const stream = localStreamRef?.current;
@@ -69,7 +76,7 @@ export default function useWebRTC({ players, playerId, localStreamRef, enabled }
 
     const onOffer = async ({ from, offer }) => {
       console.log(`[WebRTC] received offer from ${from}`);
-      if (!peersRef.current[from]) createPC(from);
+      if (!peersRef.current[from]) createPC(from, iceServersRef.current);
       const pc = peersRef.current[from];
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       await addBufferedCandidates(from);
@@ -105,9 +112,12 @@ export default function useWebRTC({ players, playerId, localStreamRef, enabled }
     const initTimer = setTimeout(async () => {
       if (cancelled) return;
       console.log(`[WebRTC] init — localStream tracks: ${localStreamRef?.current?.getTracks().length ?? 0}`);
+      const iceServers = await fetchIceServers();
+      iceServersRef.current = iceServers;
+      console.log(`[WebRTC] using ${iceServers.length} ICE servers`);
       const others = players.filter(p => p.id !== playerId);
       for (const peer of others) {
-        const pc = createPC(peer.id);
+        const pc = createPC(peer.id, iceServers);
         if (playerId < peer.id) {
           console.log(`[WebRTC] sending offer to ${peer.id}`);
           try {

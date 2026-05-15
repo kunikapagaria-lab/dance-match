@@ -54,6 +54,25 @@ restoreFromSupabase();
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
+// Fetch fresh TURN credentials from Metered.ca (API key stays on server)
+app.get('/ice-servers', async (req, res) => {
+  const { METERED_API_KEY, METERED_DOMAIN } = process.env;
+  if (!METERED_API_KEY || !METERED_DOMAIN) {
+    return res.json([
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+    ]);
+  }
+  try {
+    const r = await fetch(`https://${METERED_DOMAIN}/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`);
+    const servers = await r.json();
+    res.json(servers);
+  } catch (e) {
+    console.warn('Metered TURN fetch failed:', e.message);
+    res.json([{ urls: 'stun:stun.l.google.com:19302' }]);
+  }
+});
+
 // Fetch a level's full pose data (built-in or custom)
 app.get('/level/:id', (req, res) => {
   const id = req.params.id;
