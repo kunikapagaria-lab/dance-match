@@ -165,10 +165,10 @@ export default function Lobby() {
   // ── Enter phase ─────────────────────────────────────────────────────────
   if (phase === 'enter') {
     return (
-      <div style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 20px' }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100vw', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 20px' }}>
         <div style={{ width: '100%', maxWidth: 500 }}>
-          <div className="font-body font-semibold mb-2" style={{ fontSize: 14, letterSpacing: '0.4em', color: 'var(--accent)', opacity: 0.8, textAlign: 'center' }}>MULTIPLAYER</div>
-          <h2 className="font-display mb-10" style={{ fontSize: 48, color: 'white', margin: '0 0 48px', textAlign: 'center', textShadow: '0 0 30px var(--glow-soft)' }}>Join the Battle</h2>
+          <div className="font-body font-semibold mb-2" style={{ fontSize: 13, letterSpacing: '0.4em', color: 'var(--accent)', opacity: 0.8, textAlign: 'center' }}>MULTIPLAYER</div>
+          <h2 className="font-display mb-10" style={{ fontSize: 'clamp(28px, 8vw, 48px)', color: 'white', margin: '0 0 32px', textAlign: 'center', textShadow: '0 0 30px var(--glow-soft)' }}>Join the Battle</h2>
 
           <div className="mb-6">
             <label className="font-body font-semibold block mb-3" style={{ fontSize: 13, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.6)' }}>YOUR NAME</label>
@@ -213,14 +213,14 @@ export default function Lobby() {
 
   // ── Room phase ───────────────────────────────────────────────────────────
   return (
-    <div className="no-scrollbar" style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 20px' }}>
-      <div style={{ width: '100%', maxWidth: 1200, display: 'flex', gap: 60, flexShrink: 0, paddingBottom: 40, flexWrap: 'wrap' }}>
+    <div className="no-scrollbar" style={{ position: 'relative', zIndex: 1, width: '100vw', minHeight: '100vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px' }}>
+      <div style={{ width: '100%', maxWidth: 1200, display: 'flex', gap: 'clamp(16px, 4vw, 60px)', flexShrink: 0, paddingBottom: 40, flexWrap: 'wrap' }}>
 
         {/* Left: Room code + Players */}
-        <div style={{ flex: '0 0 350px', minWidth: 300, display: 'flex', flexDirection: 'column', marginTop: '2vh' }}>
+        <div style={{ flex: '1 1 300px', minWidth: 260, display: 'flex', flexDirection: 'column', marginTop: '2vh' }}>
           {/* Room code */}
           <div className="font-body font-semibold mb-1" style={{ fontSize: 12, letterSpacing: '0.4em', color: 'var(--accent)', opacity: 0.8 }}>ROOM CODE</div>
-          <div className="font-display" style={{ fontSize: 48, color: 'var(--accent)', letterSpacing: '0.4em', textShadow: '0 0 30px var(--glow)', marginBottom: 4 }}>
+          <div className="font-display" style={{ fontSize: 'clamp(32px, 8vw, 48px)', color: 'var(--accent)', letterSpacing: '0.4em', textShadow: '0 0 30px var(--glow)', marginBottom: 4 }}>
             {roomCode}
           </div>
           <p className="font-body mb-6" style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em' }}>Share this code to invite players</p>
@@ -311,13 +311,13 @@ export default function Lobby() {
         </div>
 
         {/* Right: Level selector */}
-        <div style={{ flex: 1, minWidth: 350, display: 'flex', flexDirection: 'column', marginTop: '2vh' }}>
+        <div style={{ flex: '1 1 300px', minWidth: 260, display: 'flex', flexDirection: 'column', marginTop: '2vh' }}>
           <div className="font-body font-semibold mb-1" style={{ fontSize: 13, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8 }}>
             SELECT LEVEL {!isHost && <span style={{ opacity: 0.5 }}>(host picks)</span>}
           </div>
           <h3 className="font-display mb-4" style={{ fontSize: 20, color: 'white', margin: '0 0 16px' }}>Battle Arena</h3>
 
-          <div className="custom-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 14, maxHeight: '40vh', overflowY: 'auto', paddingRight: 4, paddingBottom: 4, marginBottom: 20, width: '100%' }}>
+          <div className="custom-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10, maxHeight: '40vh', overflowY: 'auto', paddingRight: 4, paddingBottom: 4, marginBottom: 20, width: '100%' }}>
             {savedLevels.length === 0 && (
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No saved videos. Upload one below!</p>
             )}

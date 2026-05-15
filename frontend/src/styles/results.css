@@ -184,3 +184,21 @@
   width: 100%;
   max-width: 320px;
 }
+
+/* ── Mobile responsive ──────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .results-screen { padding: 1rem; gap: 1rem; }
+
+  .results-columns {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .champion-banner { padding: 1.25rem 1.5rem; }
+  .champion-name   { font-size: 1.8rem; }
+  .champion-crown  { font-size: 2rem; }
+
+  .round-banner { font-size: 1rem; padding: 0.75rem 1.25rem; }
+
+  .results-actions { max-width: 100%; }
+}

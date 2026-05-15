@@ -91,11 +91,11 @@ export default function SoloSetup() {
   const mins = (dur) => `${Math.floor(dur / 60)}:${String(Math.round(dur % 60)).padStart(2, '0')}`;
 
   return (
-    <div className="no-scrollbar" style={{ position: 'relative', zIndex: 1, width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', overflowY: 'auto', padding: '20px 20px' }}>
+    <div className="no-scrollbar" style={{ position: 'relative', zIndex: 1, width: '100vw', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', overflowY: 'auto', padding: '16px' }}>
       <div style={{ width: '100%', maxWidth: 1000, display: 'flex', flexDirection: 'column', flexShrink: 0, paddingBottom: 40 }}>
 
         <div style={{ flexShrink: 0, marginTop: '2vh', textAlign: 'center' }}>
-          <h2 className="font-display mb-6" style={{ fontSize: 40, color: 'white', margin: '0 0 24px', textShadow: '0 0 30px var(--glow-soft)' }}>Choose Your Track</h2>
+          <h2 className="font-display mb-6" style={{ fontSize: 'clamp(24px, 7vw, 40px)', color: 'white', margin: '0 0 20px', textShadow: '0 0 30px var(--glow-soft)' }}>Choose Your Track</h2>
         </div>
 
         {/* Player name */}
@@ -120,7 +120,7 @@ export default function SoloSetup() {
         {savedLevels.length > 0 && (
           <div className="mb-5">
             <label className="font-body font-semibold block mb-2" style={{ fontSize: 13, letterSpacing: '0.25em', color: 'var(--accent)', opacity: 0.8 }}>SAVED VIDEOS</label>
-            <div className="custom-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14, maxHeight: '40vh', overflowY: 'auto', paddingRight: 4, paddingBottom: 4 }}>
+            <div className="custom-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, maxHeight: '40vh', overflowY: 'auto', paddingRight: 4, paddingBottom: 4 }}>
               {savedLevels.map(sv => (
                 <button key={sv.id} onClick={() => setSelectedLevel(sv.id)}
                   style={{
@@ -223,7 +223,7 @@ export default function SoloSetup() {
             border: `1px solid ${selectedLevel ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`,
             color: selectedLevel && !isStarting ? 'black' : 'rgba(255,255,255,0.3)',
             padding: '22px', cursor: selectedLevel && !isStarting ? 'pointer' : 'not-allowed',
-            fontFamily: 'Audiowide, cursive', fontSize: 18, letterSpacing: '0.25em',
+            fontFamily: 'Audiowide, cursive', fontSize: 'clamp(14px, 4vw, 18px)', letterSpacing: '0.2em',
             borderRadius: '12px',
             boxShadow: selectedLevel ? '0 0 30px var(--glow), 0 0 60px var(--glow-soft)' : 'none',
             transition: 'all 300ms',

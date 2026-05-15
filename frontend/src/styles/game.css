@@ -502,3 +502,82 @@
   box-shadow: 0 0 60px var(--glow-soft, rgba(255,30,60,0.3));
   letter-spacing: 0.15em;
 }
+
+/* ── Mobile responsive ──────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .game-main {
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  /* Reference panel becomes a horizontal strip at top */
+  .reference-panel {
+    flex: 0 0 auto;
+    width: 100%;
+    height: 36vw;
+    min-height: 140px;
+    max-height: 220px;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  /* In upload mode, video and skeleton sit side by side */
+  .ref-upload-video,
+  .ref-upload-skeleton {
+    border-radius: 12px;
+  }
+
+  .reference-dancer { border-radius: 12px; background: rgba(6,1,10,0.85); border: 1px solid var(--accent,#ff1f3d); }
+
+  .camera-panel {
+    flex: 1;
+    min-height: 0;
+    border-radius: 16px;
+  }
+
+  /* Score ring — smaller, stays top-right */
+  .score-ring {
+    width: 54px; height: 54px;
+    top: 0.5rem; right: 0.5rem;
+  }
+  .score-value { font-size: 0.95rem; }
+  .score-total { top: calc(0.5rem + 62px); right: 0.5rem; padding: 0.25rem 0.5rem; }
+  .score-total-value { font-size: 0.8rem; }
+
+  /* Combo — smaller */
+  .combo-display { padding: 0.3rem 0.6rem; }
+  .combo-number  { font-size: 1rem; }
+  .combo-icon    { font-size: 1rem; }
+
+  /* Others row — compact */
+  .others-row {
+    height: 120px;
+    padding: 4px 8px;
+  }
+  .other-players { gap: 8px; }
+  .mini-player   { min-width: 90px; gap: 3px; }
+  .mini-player-name { font-size: 0.7rem; }
+  .mini-canvas-wrap { border-radius: 8px; }
+
+  /* Leaderboard — compact */
+  .leaderboard { padding: 0.3rem 0.6rem; gap: 0.75rem; }
+  .lb-entry    { padding: 0.15rem 0.5rem; font-size: 0.72rem; }
+  .leaderboard-title { font-size: 0.55rem; }
+
+  /* Overlay — full width on mobile */
+  .game-overlay-text {
+    font-size: 1rem;
+    padding: 2rem 1.5rem;
+    border-radius: 20px;
+    width: 90vw;
+    letter-spacing: 0.08em;
+  }
+
+  /* Beat feedback */
+  .beat-feedback-label { font-size: 1rem !important; }
+  .motiv-message { font-size: 0.8rem; padding: 0.6rem 1.2rem; white-space: normal; text-align: center; max-width: 85vw; }
+
+  /* Camera status banner */
+  .camera-status-banner { font-size: 0.65rem; padding: 0.4rem 1rem; bottom: 0.75rem; }
+}

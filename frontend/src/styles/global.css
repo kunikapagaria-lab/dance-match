@@ -180,3 +180,21 @@ h2 {
   border-radius: 0;
   transition: width 0.1s linear;
 }
+
+/* ── Mobile / touch fixes ──────────────────────────────────────────────── */
+
+/* Prevent iOS zoom on input focus (requires font-size >= 16px) */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px !important; }
+
+  /* Larger touch targets for buttons */
+  button { min-height: 44px; }
+
+  /* Countdown screen */
+  .countdown-circle-wrap { width: 160px; height: 160px; }
+  .countdown-number      { font-size: 5rem; }
+  .countdown-label       { font-size: 1rem; }
+
+  /* Prevent horizontal overflow */
+  body { overflow-x: hidden; }
+}
