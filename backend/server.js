@@ -94,10 +94,7 @@ app.post('/save-level', async (req, res) => {
 
   if (process.env.SUPABASE_URL) {
     const { error } = await supabase.from('custom_levels').upsert({ id, data });
-    if (error) {
-      console.error('Supabase save error:', error);
-      return res.status(500).json({ error: 'Failed to save level' });
-    }
+    if (error) console.warn('Supabase save failed (level kept in memory):', error.message);
   }
 
   res.json({ success: true, id });
