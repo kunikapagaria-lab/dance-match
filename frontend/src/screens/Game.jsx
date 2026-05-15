@@ -203,13 +203,14 @@ export default function Game() {
 
   const otherPlayers = players.filter(p => p.id !== playerId);
 
-  const localStreamRef = useRef(null);
+  const localStreamRef  = useRef(null);
+  const [hasLocalStream, setHasLocalStream] = useState(false);
 
   const { remoteStreams } = useWebRTC({
     players,
     playerId,
     localStreamRef,
-    enabled: otherPlayers.length > 0 && !!danceStartTime,
+    enabled: otherPlayers.length > 0 && !!danceStartTime && hasLocalStream,
   });
 
   if (!levelData) return <div className="game-loading">Loading level data…</div>;
@@ -347,7 +348,7 @@ export default function Game() {
             liveScore={liveScores[playerId] ?? null}
             totalScore={totalScore}
             fps={otherPlayers.length > 0 ? 10 : 15}
-            onStream={stream => { localStreamRef.current = stream; }}
+            onStream={stream => { localStreamRef.current = stream; setHasLocalStream(true); }}
           />
         </div>
       </div>
