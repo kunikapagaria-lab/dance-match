@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import socket from './socket.js';
 import { AVATARS } from './data/avatars.js';
 import NeonBackground from './components/NeonBackground.jsx';
@@ -138,6 +138,7 @@ export default function App() {
         <Route path="/countdown"  element={<Countdown />} />
         <Route path="/game"       element={<Game />} />
         <Route path="/results"    element={<Results />} />
+        <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
     </GameContext.Provider>
   );
