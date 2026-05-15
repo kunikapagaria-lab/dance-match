@@ -15,6 +15,7 @@ import MotivationalMessage from '../components/MotivationalMessage.jsx';
 import useDanceSync from '../hooks/useDanceSync.js';
 import usePoseScorer from '../hooks/usePoseScorer.js';
 import useAudio from '../hooks/useAudio.js';
+import useWebRTC from '../hooks/useWebRTC.js';
 import '../styles/game.css';
 
 const DEFAULT_YT_TOLERANCE = 0.65;
@@ -194,6 +195,12 @@ export default function Game() {
 
   const otherPlayers = players.filter(p => p.id !== playerId);
 
+  const { remoteStreams } = useWebRTC({
+    players,
+    playerId,
+    enabled: otherPlayers.length > 0 && !!danceStartTime,
+  });
+
   if (!levelData) return <div className="game-loading">Loading level data…</div>;
 
   return (
@@ -322,7 +329,7 @@ export default function Game() {
 
       {otherPlayers.length > 0 && (
         <div className="others-row">
-          <OtherPlayers players={otherPlayers} poses={otherPoses} scores={liveScores} />
+          <OtherPlayers players={otherPlayers} streams={remoteStreams} scores={liveScores} />
         </div>
       )}
 

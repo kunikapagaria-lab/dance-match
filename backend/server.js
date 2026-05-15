@@ -242,6 +242,11 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ── WebRTC signaling relay ──────────────────────────────────────────────
+  socket.on('webrtc_offer',         ({ to, offer })      => io.to(to).emit('webrtc_offer',         { from: socket.id, offer }));
+  socket.on('webrtc_answer',        ({ to, answer })     => io.to(to).emit('webrtc_answer',        { from: socket.id, answer }));
+  socket.on('webrtc_ice_candidate', ({ to, candidate })  => io.to(to).emit('webrtc_ice_candidate', { from: socket.id, candidate }));
+
   socket.on('disconnect', () => {
     console.log('disconnect', socket.id);
     const result = removePlayer(socket.id);

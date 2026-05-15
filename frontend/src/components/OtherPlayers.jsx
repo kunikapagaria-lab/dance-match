@@ -1,22 +1,35 @@
-import React, { useRef } from 'react';
-import PoseOverlay from './PoseOverlay.jsx';
+import { useEffect, useRef } from 'react';
 
-function MiniPlayer({ player, pose, score }) {
-  const canvasRef = useRef(null);
-  const landmarks = pose?.landmarks ?? null;
-
+function MiniPlayer({ player, stream, score }) {
+  const videoRef = useRef(null);
   const scoreColor = score >= 80 ? '#4ade80' : score >= 50 ? '#facc15' : score > 0 ? '#f87171' : '#888';
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (stream) {
+      el.srcObject = stream;
+      el.play().catch(() => {});
+    } else {
+      el.srcObject = null;
+    }
+  }, [stream]);
 
   return (
     <div className="mini-player">
       <div className="mini-player-name">{player.name}</div>
-      <div className="mini-canvas-wrap">
-        <canvas ref={canvasRef} width={180} height={240} className="mini-canvas" />
-        {landmarks && (
-          <PoseOverlay canvasRef={canvasRef} landmarks={landmarks} color="#60a5fa" lineWidth={2} dotRadius={3} />
-        )}
-        {!landmarks && (
-          <div className="mini-placeholder">&#128372;</div>
+      <div className="mini-canvas-wrap" style={{ background: '#000', borderRadius: 8, overflow: 'hidden' }}>
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scaleX(-1)' }}
+        />
+        {!stream && (
+          <div className="mini-placeholder" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            &#128372;
+          </div>
         )}
       </div>
       {score > 0 && (
@@ -26,7 +39,7 @@ function MiniPlayer({ player, pose, score }) {
   );
 }
 
-export default function OtherPlayers({ players, poses, scores }) {
+export default function OtherPlayers({ players, streams, scores }) {
   const slots = [...players];
   while (slots.length < 3) slots.push(null);
 
@@ -37,7 +50,7 @@ export default function OtherPlayers({ players, poses, scores }) {
           <MiniPlayer
             key={player.id}
             player={player}
-            pose={poses[player.id]}
+            stream={streams?.[player.id] || null}
             score={scores[player.id] ?? 0}
           />
         ) : (
