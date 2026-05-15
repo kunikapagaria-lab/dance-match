@@ -37,10 +37,22 @@ export default function useWebRTC({ players, playerId, localStreamRef, enabled }
       };
 
       pc.onconnectionstatechange = () => {
+        console.log(`[WebRTC ${peerId}] connection: ${pc.connectionState}`);
         if (pc.connectionState === 'failed') {
+          console.warn(`[WebRTC ${peerId}] ICE failed — restarting`);
           pc.restartIce();
         }
       };
+
+      pc.onicegatheringstatechange = () => {
+        console.log(`[WebRTC ${peerId}] ICE gathering: ${pc.iceGatheringState}`);
+      };
+
+      pc.onsignalingstatechange = () => {
+        console.log(`[WebRTC ${peerId}] signaling: ${pc.signalingState}`);
+      };
+
+      console.log(`[WebRTC] createPC for ${peerId}, stream tracks: ${localStreamRef?.current?.getTracks().length ?? 0}`);
 
       peersRef.current[peerId] = pc;
       return pc;
@@ -56,6 +68,7 @@ export default function useWebRTC({ players, playerId, localStreamRef, enabled }
     }
 
     const onOffer = async ({ from, offer }) => {
+      console.log(`[WebRTC] received offer from ${from}`);
       if (!peersRef.current[from]) createPC(from);
       const pc = peersRef.current[from];
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -66,6 +79,7 @@ export default function useWebRTC({ players, playerId, localStreamRef, enabled }
     };
 
     const onAnswer = async ({ from, answer }) => {
+      console.log(`[WebRTC] received answer from ${from}`);
       const pc = peersRef.current[from];
       if (!pc) return;
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
@@ -90,10 +104,12 @@ export default function useWebRTC({ players, playerId, localStreamRef, enabled }
     // Small delay so both players finish mounting their socket handlers
     const initTimer = setTimeout(async () => {
       if (cancelled) return;
+      console.log(`[WebRTC] init — localStream tracks: ${localStreamRef?.current?.getTracks().length ?? 0}`);
       const others = players.filter(p => p.id !== playerId);
       for (const peer of others) {
         const pc = createPC(peer.id);
         if (playerId < peer.id) {
+          console.log(`[WebRTC] sending offer to ${peer.id}`);
           try {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
