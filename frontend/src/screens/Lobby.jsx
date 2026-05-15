@@ -249,9 +249,18 @@ export default function Lobby() {
 
           {/* Actions */}
           {!me?.ready && (
-            <AccentBtn onClick={() => socket.emit('player_ready')} style={{ width: '100%', marginBottom: 8, padding: '18px', fontSize: 16 }}>
+            <AccentBtn
+              onClick={() => socket.emit('player_ready')}
+              disabled={players.length < 2}
+              style={{ width: '100%', marginBottom: 8, padding: '18px', fontSize: 16 }}
+            >
               I'M READY
             </AccentBtn>
+          )}
+          {!me?.ready && players.length < 2 && (
+            <p className="font-body" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textAlign: 'center', letterSpacing: '0.1em', marginBottom: 8 }}>
+              Waiting for at least 1 more player to join…
+            </p>
           )}
           {me?.ready && (
             <div className="font-body font-semibold" style={{
