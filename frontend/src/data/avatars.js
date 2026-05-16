@@ -26,7 +26,7 @@ export const AVATARS = [
     quote: 'Light bends to the beat.',
     glb: '/models/nova.glb',
     hueShift: 210,
-    filterExtra: 'saturate(2.5) brightness(0.75)',
+    filterExtra: 'saturate(3) brightness(1.0)',
     palette: {
       accent:     '#9b30ff',
       accentSoft: '#bc72ff',
