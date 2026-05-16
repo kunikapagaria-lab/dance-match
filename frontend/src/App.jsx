@@ -53,7 +53,7 @@ export default function App() {
     isYoutube: false,
     videoId: null,
     // theme — restored from localStorage so it survives refresh
-    palette: AVATARS[parseInt(localStorage.getItem('avatarIdx') || '0', 10)]?.palette ?? AVATARS[0].palette,
+    palette: AVATARS[parseInt(localStorage.getItem('avatarIdx') || '2', 10)]?.palette ?? AVATARS[2].palette,
     gameMode: null, // 'solo' | 'multiplayer'
   });
 

@@ -68,7 +68,7 @@ function ModeBox({ num, label, selected, onClick }) {
 
 export default function LandingPage() {
   const [activeIdx, setActiveIdx] = useState(() =>
-    parseInt(localStorage.getItem('avatarIdx') || '0', 10)
+    parseInt(localStorage.getItem('avatarIdx') || '2', 10)
   );
   const [swapping, setSwapping]   = useState(false);
   const [selectedMode, setSelectedMode] = useState(null);
