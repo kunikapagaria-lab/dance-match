@@ -67,7 +67,9 @@ function ModeBox({ num, label, selected, onClick }) {
 }
 
 export default function LandingPage() {
-  const [activeIdx, setActiveIdx] = useState(0);
+  const [activeIdx, setActiveIdx] = useState(() =>
+    parseInt(localStorage.getItem('avatarIdx') || '0', 10)
+  );
   const [swapping, setSwapping]   = useState(false);
   const [selectedMode, setSelectedMode] = useState(null);
   const { containerRef, parallax } = useParallax();
@@ -96,6 +98,7 @@ export default function LandingPage() {
     setTimeout(() => {
       setActiveIdx(i => {
         const next = (i + dir + AVATARS.length) % AVATARS.length;
+        localStorage.setItem('avatarIdx', String(next));
         setGameState(s => ({ ...s, palette: AVATARS[next].palette }));
         return next;
       });

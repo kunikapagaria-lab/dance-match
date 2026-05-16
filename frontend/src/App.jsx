@@ -52,8 +52,8 @@ export default function App() {
     audioUrl: '',
     isYoutube: false,
     videoId: null,
-    // theme
-    palette: AVATARS[0].palette,
+    // theme — restored from localStorage so it survives refresh
+    palette: AVATARS[parseInt(localStorage.getItem('avatarIdx') || '0', 10)]?.palette ?? AVATARS[0].palette,
     gameMode: null, // 'solo' | 'multiplayer'
   });
 
