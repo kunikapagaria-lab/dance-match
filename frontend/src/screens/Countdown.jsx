@@ -89,12 +89,32 @@ export default function Countdown() {
 
       {/* Live camera preview — play button overlaid on video */}
       <div style={{ position: 'relative', marginTop: 8 }}>
+
+        {/* Expanding rings radiating outward — only when waiting for host to start */}
+        {(countdownValue === null || countdownValue === undefined) && isHost && (
+          <>
+            <div style={{
+              position: 'absolute', inset: 0, border: '1.5px solid var(--accent)',
+              pointerEvents: 'none', zIndex: 0,
+              animation: 'expandRing 2s ease-out infinite',
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0, border: '1.5px solid var(--accent)',
+              pointerEvents: 'none', zIndex: 0,
+              animation: 'expandRing 2s ease-out 0.65s infinite',
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0, border: '1.5px solid var(--accent)',
+              pointerEvents: 'none', zIndex: 0,
+              animation: 'expandRing 2s ease-out 1.3s infinite',
+            }} />
+          </>
+        )}
+
         <div style={{
           border: '1.5px solid var(--accent, #ff1f3d)',
           boxShadow: '0 0 20px var(--glow-soft, rgba(255,30,60,0.25))',
-          overflow: 'hidden', width: 260, height: 195, position: 'relative',
-          animation: (countdownValue === null || countdownValue === undefined) && isHost
-            ? 'boxRingPulse 1.8s ease-in-out infinite' : 'none',
+          overflow: 'hidden', width: 260, height: 195, position: 'relative', zIndex: 1,
         }}>
           <video
             ref={videoRef}
@@ -168,7 +188,7 @@ export default function Countdown() {
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes ringPulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.5); opacity: 0; } }
-        @keyframes boxRingPulse { 0%, 100% { box-shadow: 0 0 20px var(--glow-soft); } 50% { box-shadow: 0 0 40px var(--glow), 0 0 80px var(--glow-soft); } }
+        @keyframes expandRing { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.5); opacity: 0; } }
         @keyframes tapBlink { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.2; } }
       `}</style>
     </div>
