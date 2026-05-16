@@ -86,7 +86,7 @@ export default function CharacterZone({ avatar, parallax, swapping, onSwap }) {
           interaction-prompt="none"
           style={{
             width: '100%', height: '100%', background: 'transparent',
-            filter: `hue-rotate(${avatar.hueShift}deg) drop-shadow(0 0 20px var(--glow)) drop-shadow(0 2px 8px rgba(0,0,0,0.9)) drop-shadow(-4px 0 12px var(--glow-soft))`,
+            filter: `hue-rotate(${avatar.hueShift}deg) ${avatar.filterExtra || ''} drop-shadow(0 0 20px var(--glow)) drop-shadow(0 2px 8px rgba(0,0,0,0.9)) drop-shadow(-4px 0 12px var(--glow-soft))`,
           }}
         />
       </div>
