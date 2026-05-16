@@ -86,13 +86,26 @@ export default function SceneBackground({ palette }) {
     const dpr    = Math.min(window.devicePixelRatio || 1, 2);
 
     let W = 0, H = 0;
-    let hexes  = [];
-    let pulses = [];
+    let hexes   = [];
+    let pulses  = [];
+    let ambient = [];   // always-on breathing hexagons
     let rafId;
+    let t0 = performance.now();
 
     let mouse  = { x: 0, y: 0 };
     let hot    = { x: 0, y: 0 };
     let scrollY = 0;
+
+    function makeAmbient(hexes) {
+      // 5 hexagons that always glow, spread across the grid
+      return Array.from({ length: 5 }, (_, i) => ({
+        hi:    Math.floor((i / 5 + Math.random() * 0.15) * hexes.length),
+        phase: (i / 5) * Math.PI * 2,              // evenly spread phases
+        freq:  0.4 + Math.random() * 0.4,           // breath speed
+        peak:  0.45 + Math.random() * 0.35,         // max glow
+        nextSwap: performance.now() + 3000 + Math.random() * 4000,
+      }));
+    }
 
     function resize() {
       W = window.innerWidth;
@@ -102,20 +115,38 @@ export default function SceneBackground({ palette }) {
       canvas.style.width  = `${W}px`;
       canvas.style.height = `${H}px`;
       ctx.scale(dpr, dpr);
-      hexes  = buildGrid(W, H);
-      pulses = Array.from({ length: PULSE_COUNT }, () => makePulse(hexes));
-      mouse  = { x: W / 2, y: H * 0.35 };
-      hot    = { ...mouse };
+      hexes   = buildGrid(W, H);
+      pulses  = Array.from({ length: PULSE_COUNT }, () => makePulse(hexes));
+      ambient = makeAmbient(hexes);
+      mouse   = { x: W / 2, y: H * 0.35 };
+      hot     = { ...mouse };
     }
 
-    function draw() {
+    function draw(now) {
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = '#05050a';
       ctx.fillRect(0, 0, W, H);
 
+      const elapsed = (now - t0) / 1000; // seconds
+
       // smooth hotspot toward cursor
       hot.x += (mouse.x - hot.x) * 0.06;
       hot.y += (mouse.y - hot.y) * 0.06;
+
+      // update ambient hexagons — breathe + occasionally swap to new hex
+      for (const a of ambient) {
+        if (now > a.nextSwap) {
+          a.hi       = Math.floor(Math.random() * hexes.length);
+          a.nextSwap = now + 3000 + Math.random() * 4000;
+        }
+      }
+
+      // build a quick lookup: hexIndex → ambient intensity
+      const ambientMap = new Float32Array(hexes.length);
+      for (const a of ambient) {
+        const intensity = a.peak * (0.5 + 0.5 * Math.sin(elapsed * a.freq * Math.PI * 2 + a.phase));
+        ambientMap[a.hi] = Math.max(ambientMap[a.hi], intensity);
+      }
 
       // advance pulses
       for (const p of pulses) {
@@ -160,13 +191,16 @@ export default function SceneBackground({ palette }) {
           const dist    = Math.hypot(mx - hot.x, my - hot.y);
           const cursorI = Math.max(0, 1 - dist / 260) ** 2;
 
-          // idle pulse glow
+          // idle pulse glow (single edge travelling)
           let pulseI = 0;
           for (const p of pulses)
             if (p.hi === hi && p.edge === ei)
               pulseI = Math.max(pulseI, p.intensity * Math.sin(p.t * Math.PI));
 
-          const intensity = Math.min(1, cursorI + pulseI * 0.55);
+          // ambient breathing glow (all edges of chosen hexagons)
+          const ambientI = ambientMap[hi] || 0;
+
+          const intensity = Math.min(1, cursorI + pulseI * 0.55 + ambientI);
           if (intensity < 0.025) continue;
 
           drawEdge(ctx, v1, v2, col, intensity);
