@@ -82,40 +82,57 @@ export default function Countdown() {
         </span>
       ) : (
         isHost ? (
-          <button onClick={handleStartCountdown} style={{
-            background: 'rgba(0,0,0,0.55)',
-            border: '2.5px solid var(--accent, #00aaff)',
-            outline: 'none', cursor: 'pointer',
-            padding: '26px 72px',
-            fontFamily: 'Audiowide,cursive', fontSize: 38,
-            color: 'var(--accent, #00aaff)',
-            letterSpacing: '0.4em',
-            boxShadow: '0 0 30px var(--glow), 0 0 60px var(--glow-soft), inset 0 0 24px rgba(0,0,0,0.5)',
-            textShadow: '0 0 30px var(--glow), 0 0 60px var(--glow-soft)',
-            backdropFilter: 'blur(6px)',
-            transition: 'all 0.18s ease',
-            animation: 'startPulse 1.8s ease-in-out infinite',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'var(--accent)';
-            e.currentTarget.style.color = '#000';
-            e.currentTarget.style.textShadow = 'none';
-            e.currentTarget.style.boxShadow = '0 0 40px var(--glow), 0 0 80px var(--glow-soft)';
-            e.currentTarget.style.transform = 'scale(1.06)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'rgba(0,0,0,0.45)';
-            e.currentTarget.style.color = 'var(--accent)';
-            e.currentTarget.style.textShadow = '0 0 20px var(--glow)';
-            e.currentTarget.style.boxShadow = '0 0 18px var(--glow), inset 0 0 18px rgba(0,0,0,0.4)';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}>
-            START
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            <div style={{ position: 'relative' }}>
+              {/* Pulsing ring behind the button */}
+              <div style={{
+                position: 'absolute', inset: -12,
+                border: '2px solid var(--accent)',
+                borderRadius: 6, opacity: 0.4,
+                animation: 'ringPulse 1.6s ease-out infinite',
+                pointerEvents: 'none',
+              }} />
+              <button onClick={handleStartCountdown} style={{
+                background: 'var(--accent)',
+                border: '2px solid var(--accent)',
+                outline: 'none', cursor: 'pointer',
+                padding: '22px 64px',
+                fontFamily: 'Audiowide,cursive', fontSize: 34,
+                color: '#000',
+                letterSpacing: '0.35em',
+                fontWeight: 700,
+                boxShadow: '0 0 40px var(--glow), 0 0 80px var(--glow-soft)',
+                borderRadius: 4,
+                transition: 'all 0.15s ease',
+                position: 'relative', zIndex: 1,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'scale(1.06)';
+                e.currentTarget.style.boxShadow = '0 0 70px var(--glow), 0 0 140px var(--glow-soft)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 0 40px var(--glow), 0 0 80px var(--glow-soft)';
+              }}
+              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
+              onMouseUp={e => e.currentTarget.style.transform = 'scale(1.06)'}>
+                ▶ &nbsp;START
+              </button>
+            </div>
+            <span style={{
+              fontFamily: 'Rajdhani,sans-serif', fontSize: 12,
+              letterSpacing: '0.3em', color: 'var(--accent)', opacity: 0.6,
+              animation: 'tapBlink 1.6s ease-in-out infinite',
+            }}>TAP TO BEGIN</span>
+          </div>
           <style>{`
-            @keyframes startPulse {
-              0%, 100% { box-shadow: 0 0 30px var(--glow), 0 0 60px var(--glow-soft), inset 0 0 24px rgba(0,0,0,0.5); }
-              50%       { box-shadow: 0 0 60px var(--glow), 0 0 120px var(--glow-soft), inset 0 0 24px rgba(0,0,0,0.5); }
+            @keyframes ringPulse {
+              0%   { transform: scale(1);   opacity: 0.5; }
+              100% { transform: scale(1.5); opacity: 0; }
+            }
+            @keyframes tapBlink {
+              0%, 100% { opacity: 0.6; }
+              50%       { opacity: 0.2; }
             }
           `}</style>
         ) : (
