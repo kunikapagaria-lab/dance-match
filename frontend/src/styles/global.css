@@ -198,3 +198,12 @@ h2 {
   /* Prevent horizontal overflow */
   body { overflow-x: hidden; }
 }
+
+/* ── Mobile center alignment for inner pages ──────────────────────────────── */
+@media (max-width: 767px) {
+  .no-scrollbar h2,
+  .no-scrollbar label,
+  .no-scrollbar .font-display {
+    text-align: center;
+  }
+}

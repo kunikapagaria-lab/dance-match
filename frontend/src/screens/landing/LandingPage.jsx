@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AVATARS } from '../../data/avatars.js';
+import { AVATARS, FALLBACK_GLB } from '../../data/avatars.js';
 import { useParallax } from '../../hooks/useParallax.js';
 import { useKeyboardSwap } from '../../hooks/useKeyboardSwap.js';
 import { useGame } from '../../App.jsx';
@@ -72,7 +72,14 @@ export default function LandingPage() {
   );
   const [swapping, setSwapping]   = useState(false);
   const [selectedMode, setSelectedMode] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const { containerRef, parallax } = useParallax();
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   const { setGameState } = useGame();
   const navigate = useNavigate();
   const avatar = AVATARS[activeIdx];
@@ -132,43 +139,84 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero text */}
-      <div style={S.hero}>
-        <div className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 600, fontSize: 16, letterSpacing: '0.28em', opacity: 0.7, color: palette.text, marginBottom: 8 }}>{avatar.style}</div>
-        <h1 className={`glow-text ${sw}`} style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(48px,8vw,100px)', lineHeight: 0.9, color: palette.text, margin: '0 0 16px' }}>{avatar.name}</h1>
-        <p className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 300, fontStyle: 'italic', fontSize: 18, maxWidth: 440, opacity: 0.78, color: palette.text, marginBottom: 4 }}>
-          " {avatar.quote} "
-        </p>
-        <p style={{ fontFamily: 'Rajdhani,sans-serif', fontSize: 11, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8, marginBottom: 28 }}>{avatar.tag}</p>
+      {isMobile ? (
+        /* ── Mobile layout: avatar top, text+buttons below ── */
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%', paddingTop: 60 }}>
+          {/* Character — top 42% */}
+          <div className={swapping ? 'is-swapping' : ''} style={{ width: '100%', height: '42vh', position: 'relative', flexShrink: 0 }}>
+            <model-viewer
+              src={avatar.glb.startsWith('/models/') ? FALLBACK_GLB : avatar.glb}
+              alt={avatar.name}
+              animation-name="Dance" autoplay="" auto-rotate="" camera-controls="" disable-zoom="" interaction-prompt="none"
+              style={{ width: '100%', height: '100%', background: 'transparent',
+                filter: `hue-rotate(${avatar.hueShift}deg) ${avatar.filterExtra || ''} drop-shadow(0 0 20px var(--glow)) drop-shadow(0 2px 8px rgba(0,0,0,0.9))` }}
+            />
+          </div>
 
-        <div style={S.modeRow}>
-          <ModeBox num="01" label="SOLO"        selected={selectedMode === 'solo'}        onClick={() => setSelectedMode('solo')} />
-          <ModeBox num="02" label="MULTIPLAYER" selected={selectedMode === 'multiplayer'} onClick={() => setSelectedMode('multiplayer')} />
+          {/* Text + buttons — centered below avatar */}
+          <div style={{ textAlign: 'center', padding: '0 24px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <div className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 600, fontSize: 13, letterSpacing: '0.28em', opacity: 0.7, color: palette.text }}>{avatar.style}</div>
+            <h1 className={`glow-text ${sw}`} style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(36px,10vw,64px)', lineHeight: 1, color: palette.text, margin: '4px 0 8px' }}>{avatar.name}</h1>
+            <p className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 300, fontStyle: 'italic', fontSize: 15, opacity: 0.78, color: palette.text, marginBottom: 2 }}>
+              " {avatar.quote} "
+            </p>
+            <p style={{ fontFamily: 'Rajdhani,sans-serif', fontSize: 10, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8, marginBottom: 16 }}>{avatar.tag}</p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <ModeBox num="01" label="SOLO"        selected={selectedMode === 'solo'}        onClick={() => setSelectedMode('solo')} />
+              <ModeBox num="02" label="MULTIPLAYER" selected={selectedMode === 'multiplayer'} onClick={() => setSelectedMode('multiplayer')} />
+            </div>
+            {selectedMode && (
+              <button className="is-entering" onClick={handleStart} style={{
+                marginTop: 12, fontFamily: 'Audiowide,cursive', color: 'black', fontSize: 12,
+                letterSpacing: '0.2em', background: 'var(--accent)', padding: '14px 28px', border: 'none',
+                boxShadow: '0 0 30px var(--glow)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <span>START DANCING</span>
+                <svg width={16} height={12} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M0 7h14M13 1l6 6-6 6" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
-
-        <div style={{ minHeight: 64, display: 'flex', alignItems: 'center' }}>
-          {selectedMode && (
-            <button className="is-entering" onClick={handleStart} style={{
-              fontFamily: 'Audiowide,cursive', color: 'black', fontSize: 13,
-              letterSpacing: '0.22em', background: 'var(--accent)', padding: '18px 32px', border: 'none',
-              clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px))',
-              boxShadow: '0 0 30px var(--glow), 0 0 80px var(--glow-soft)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 12,
-              transition: 'transform 200ms, box-shadow 200ms',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 50px var(--glow), 0 0 120px var(--glow-soft)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = '';e.currentTarget.style.boxShadow = '0 0 30px var(--glow), 0 0 80px var(--glow-soft)'; }}
-            >
-              <span>START DANCING</span>
-              <svg width={20} height={14} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M0 7h14M13 1l6 6-6 6" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
-
-      <CharacterZone avatar={avatar} parallax={parallax} swapping={swapping} onSwap={handleSwap} />
+      ) : (
+        <>
+          {/* ── Desktop layout ── */}
+          <div style={S.hero}>
+            <div className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 600, fontSize: 16, letterSpacing: '0.28em', opacity: 0.7, color: palette.text, marginBottom: 8 }}>{avatar.style}</div>
+            <h1 className={`glow-text ${sw}`} style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(48px,8vw,100px)', lineHeight: 0.9, color: palette.text, margin: '0 0 16px' }}>{avatar.name}</h1>
+            <p className={sw} style={{ fontFamily: 'Rajdhani,sans-serif', fontWeight: 300, fontStyle: 'italic', fontSize: 18, maxWidth: 440, opacity: 0.78, color: palette.text, marginBottom: 4 }}>
+              " {avatar.quote} "
+            </p>
+            <p style={{ fontFamily: 'Rajdhani,sans-serif', fontSize: 11, letterSpacing: '0.35em', color: 'var(--accent)', opacity: 0.8, marginBottom: 28 }}>{avatar.tag}</p>
+            <div style={S.modeRow}>
+              <ModeBox num="01" label="SOLO"        selected={selectedMode === 'solo'}        onClick={() => setSelectedMode('solo')} />
+              <ModeBox num="02" label="MULTIPLAYER" selected={selectedMode === 'multiplayer'} onClick={() => setSelectedMode('multiplayer')} />
+            </div>
+            <div style={{ minHeight: 64, display: 'flex', alignItems: 'center' }}>
+              {selectedMode && (
+                <button className="is-entering" onClick={handleStart} style={{
+                  fontFamily: 'Audiowide,cursive', color: 'black', fontSize: 13,
+                  letterSpacing: '0.22em', background: 'var(--accent)', padding: '18px 32px', border: 'none',
+                  clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px))',
+                  boxShadow: '0 0 30px var(--glow), 0 0 80px var(--glow-soft)', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 12, transition: 'transform 200ms, box-shadow 200ms',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 0 50px var(--glow), 0 0 120px var(--glow-soft)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 0 30px var(--glow), 0 0 80px var(--glow-soft)'; }}
+                >
+                  <span>START DANCING</span>
+                  <svg width={20} height={14} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M0 7h14M13 1l6 6-6 6" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          <CharacterZone avatar={avatar} parallax={parallax} swapping={swapping} onSwap={handleSwap} />
+        </>
+      )}
 
       {/* Bottom meta */}
       <div style={S.bottomMeta}>

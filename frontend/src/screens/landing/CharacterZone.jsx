@@ -15,7 +15,7 @@ function SwapArrow({ dir, onClick }) {
         background: 'transparent',
         border: 'none',
         cursor: 'pointer', outline: 'none',
-        opacity: 0,
+        opacity: 0.18,
         transition: 'opacity 250ms ease, background 250ms ease',
       }}
       onMouseEnter={e => {
