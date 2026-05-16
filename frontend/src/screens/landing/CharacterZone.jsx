@@ -73,7 +73,6 @@ export default function CharacterZone({ avatar, parallax, swapping, onSwap }) {
         zIndex: 4, pointerEvents: 'none',
       }} />
 
-      <CharacterFrame parallax={parallax} />
 
       {/* Character — breaks above the frame */}
       <div className={swapping ? 'is-swapping' : ''} style={{
