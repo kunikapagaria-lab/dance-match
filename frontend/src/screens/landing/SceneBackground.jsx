@@ -9,7 +9,6 @@ const COL_W2       = HEX_R2 * Math.sqrt(3);
 const ROW_H2       = HEX_R2 * 1.5;
 const AMBIENT_CNT  = 6;
 const TRAIL_LEN    = 30;
-const SCAN_SPEED   = 110;                    // px / second
 const RIPPLE_MAXR  = 400;
 const GRAVITY_PX   = 6;                     // max vertex pull toward cursor
 
@@ -103,7 +102,6 @@ export default function SceneBackground({ palette }) {
     let ambient = [];
     let ripples  = [];                   // [{ x,y,t,speed }]
     let trail    = [];                   // [{ x, y }]
-    let scanY    = 0;
     let rafId;
     let lastTime = performance.now();
 
@@ -122,7 +120,7 @@ export default function SceneBackground({ palette }) {
       hexes2 = buildGrid(W, H, HEX_R2, COL_W2, ROW_H2, COL_W2*0.5, ROW_H2*0.5);
       ambient = makeAmbient(hexes);
       mouse     = { x: W/2, y: H*0.4 }; hot = { ...mouse };
-      scanY     = 0; trail = [];
+      trail = [];
     }
 
 
@@ -146,10 +144,6 @@ export default function SceneBackground({ palette }) {
       hot.y += (mouse.y - hot.y) * 0.06;
       trail.push({ x: hot.x, y: hot.y });
       if (trail.length > TRAIL_LEN) trail.shift();
-
-      // ── scan line ──
-      scanY += SCAN_SPEED * dt;
-      if (scanY > H + 60) scanY = -60;
 
       // ── ripples ──
       for (const rp of ripples) rp.t += dt * 0.9;
@@ -220,10 +214,7 @@ export default function SceneBackground({ palette }) {
             rippleI = Math.max(rippleI, Math.max(0, 1 - Math.abs(d - target)/55) * (1 - rp.t*0.75) * 0.8);
           }
 
-          // scan line
-          const scanI = Math.max(0, 1 - Math.abs(my - scanY)/70) * 0.32;
-
-          const intensity = Math.min(1, cursorI + trailI + ambI + rippleI + scanI);
+          const intensity = Math.min(1, cursorI + trailI + ambI + rippleI);
           if (intensity < 0.025) continue;
 
           drawEdge(ctx, v1, v2, col, intensity);
