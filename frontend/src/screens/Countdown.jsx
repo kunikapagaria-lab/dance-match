@@ -119,16 +119,30 @@ export default function Countdown() {
         ) : (
           isHost ? (
             <button onClick={handleStartCountdown} style={{
-              width: 148, height: 166,
-              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-              background: 'rgba(255,255,255,0.05)',
-              color: 'var(--accent, #ff1f3d)', fontFamily: 'Audiowide,cursive', fontSize: 22,
-              cursor: 'pointer', border: 'none', outline: 'none',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent, #ff1f3d)'; e.currentTarget.style.color = 'black'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--accent, #ff1f3d)'; }}>
-              START
+              position: 'relative', width: 180, height: 200,
+              background: 'none', border: 'none', outline: 'none', cursor: 'pointer', padding: 0,
+            }}>
+              <svg width={180} height={200} viewBox="0 0 180 200" style={{ position: 'absolute', inset: 0 }}>
+                <defs>
+                  <filter id="startglow">
+                    <feGaussianBlur stdDeviation="5" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <polygon
+                  points="90,10 166,52 166,148 90,190 14,148 14,52"
+                  fill="#0a0a12"
+                  stroke="var(--accent, #ff1f3d)"
+                  strokeWidth={2}
+                  filter="url(#startglow)"
+                />
+              </svg>
+              <span style={{
+                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'Audiowide,cursive', fontSize: 22, color: 'var(--accent, #ff1f3d)',
+                textShadow: '0 0 20px var(--glow, rgba(255,30,60,0.7))',
+                letterSpacing: '0.15em',
+              }}>START</span>
             </button>
           ) : (
             <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 16, color: 'white', textAlign: 'center', opacity: 0.6 }}>
