@@ -7,22 +7,31 @@ function SwapArrow({ dir, onClick }) {
       aria-label={isLeft ? 'Previous avatar' : 'Next avatar'}
       onClick={onClick}
       style={{
-        position: 'absolute', top: '50%', zIndex: 20,
+        position: 'fixed', top: '50%', zIndex: 50,
+        [isLeft ? 'left' : 'right']: 0,
         transform: 'translateY(-50%)',
-        [isLeft ? 'left' : 'right']: -24,
-        width: 44, height: 44,
+        width: 48, height: 80,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(0,0,0,0.55)',
-        border: '1.5px solid var(--accent)',
-        backdropFilter: 'blur(6px)',
+        background: 'transparent',
+        border: 'none',
         cursor: 'pointer', outline: 'none',
-        boxShadow: '0 0 12px var(--glow-soft)',
-        transition: 'box-shadow 150ms, transform 200ms',
+        opacity: 0,
+        transition: 'opacity 250ms ease, background 250ms ease',
       }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 24px var(--glow)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 12px var(--glow-soft)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
+      onMouseEnter={e => {
+        e.currentTarget.style.opacity = '1';
+        e.currentTarget.style.background = 'rgba(0,0,0,0.35)';
+        e.currentTarget.style.boxShadow = isLeft
+          ? '4px 0 24px var(--glow-soft)'
+          : '-4px 0 24px var(--glow-soft)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.opacity = '0';
+        e.currentTarget.style.background = 'transparent';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
     >
-      <svg width={14} height={14} viewBox="0 0 14 14" fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={18} height={18} viewBox="0 0 14 14" fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
         {isLeft ? <path d="M10 2L4 7l6 5" /> : <path d="M4 2l6 5-6 5" />}
       </svg>
     </button>
