@@ -83,15 +83,41 @@ export default function Countdown() {
       ) : (
         isHost ? (
           <button onClick={handleStartCountdown} style={{
-            background: 'none', border: 'none', outline: 'none', cursor: 'pointer', padding: '16px 32px',
-            fontFamily: 'Audiowide,cursive', fontSize: 28, color: 'var(--accent, #ff1f3d)',
-            textShadow: '0 0 30px var(--glow, rgba(255,30,60,0.9)), 0 0 60px var(--glow-soft, rgba(255,30,60,0.4))',
-            letterSpacing: '0.25em', transition: 'all 0.2s',
+            background: 'rgba(0,0,0,0.45)',
+            border: '1.5px solid var(--accent, #00aaff)',
+            outline: 'none', cursor: 'pointer',
+            padding: '18px 48px',
+            fontFamily: 'Audiowide,cursive', fontSize: 28,
+            color: 'var(--accent, #00aaff)',
+            letterSpacing: '0.3em',
+            boxShadow: '0 0 18px var(--glow), inset 0 0 18px rgba(0,0,0,0.4)',
+            textShadow: '0 0 20px var(--glow)',
+            backdropFilter: 'blur(4px)',
+            transition: 'all 0.18s ease',
+            animation: 'startPulse 2s ease-in-out infinite',
           }}
-          onMouseEnter={e => e.currentTarget.style.textShadow = '0 0 50px var(--glow), 0 0 100px var(--glow-soft)'}
-          onMouseLeave={e => e.currentTarget.style.textShadow = '0 0 30px var(--glow), 0 0 60px var(--glow-soft)'}>
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'var(--accent)';
+            e.currentTarget.style.color = '#000';
+            e.currentTarget.style.textShadow = 'none';
+            e.currentTarget.style.boxShadow = '0 0 40px var(--glow), 0 0 80px var(--glow-soft)';
+            e.currentTarget.style.transform = 'scale(1.06)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(0,0,0,0.45)';
+            e.currentTarget.style.color = 'var(--accent)';
+            e.currentTarget.style.textShadow = '0 0 20px var(--glow)';
+            e.currentTarget.style.boxShadow = '0 0 18px var(--glow), inset 0 0 18px rgba(0,0,0,0.4)';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}>
             START
           </button>
+          <style>{`
+            @keyframes startPulse {
+              0%, 100% { box-shadow: 0 0 18px var(--glow), inset 0 0 18px rgba(0,0,0,0.4); }
+              50%       { box-shadow: 0 0 35px var(--glow), 0 0 60px var(--glow-soft), inset 0 0 18px rgba(0,0,0,0.4); }
+            }
+          `}</style>
         ) : (
           <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 16, color: 'white', textAlign: 'center', opacity: 0.6 }}>
             WAITING<br/>FOR HOST
