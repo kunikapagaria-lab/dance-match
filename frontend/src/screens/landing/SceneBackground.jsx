@@ -7,7 +7,6 @@ const ROW_H        = HEX_R * 1.5;
 const HEX_R2       = HEX_R * 1.4;          // depth-layer hex size
 const COL_W2       = HEX_R2 * Math.sqrt(3);
 const ROW_H2       = HEX_R2 * 1.5;
-const PULSE_COUNT  = 4;
 const AMBIENT_CNT  = 6;
 const TRAIL_LEN    = 30;
 const SCAN_SPEED   = 110;                    // px / second
@@ -45,13 +44,6 @@ function buildGrid(w, h, r, cw, rh, offX = 0, offY = 0) {
   return out;
 }
 
-
-function makePulse(hexes) {
-  return { hi: Math.floor(Math.random() * hexes.length),
-           edge: Math.floor(Math.random() * 6),
-           t: Math.random(), speed: 0.004 + Math.random() * 0.006,
-           intensity: 0.5 + Math.random() * 0.4 };
-}
 
 function makeAmbient(hexes) {
   return Array.from({ length: AMBIENT_CNT }, (_, i) => ({
@@ -108,7 +100,7 @@ export default function SceneBackground({ palette }) {
 
     let W = 0, H = 0;
     let hexes = [], hexes2 = [];
-    let pulses = [], ambient = [];
+    let ambient = [];
     let ripples  = [];                   // [{ x,y,t,speed }]
     let trail    = [];                   // [{ x, y }]
     let scanY    = 0;
@@ -128,8 +120,7 @@ export default function SceneBackground({ palette }) {
       ctx.scale(dpr, dpr);
       hexes  = buildGrid(W, H, HEX_R,  COL_W,  ROW_H);
       hexes2 = buildGrid(W, H, HEX_R2, COL_W2, ROW_H2, COL_W2*0.5, ROW_H2*0.5);
-      pulses    = Array.from({ length: PULSE_COUNT }, () => makePulse(hexes));
-      ambient   = makeAmbient(hexes);
+      ambient = makeAmbient(hexes);
       mouse     = { x: W/2, y: H*0.4 }; hot = { ...mouse };
       scanY     = 0; trail = [];
     }
@@ -171,11 +162,6 @@ export default function SceneBackground({ palette }) {
         ambMap[a.hi] = Math.max(ambMap[a.hi], a.peak * (0.5 + 0.5 * Math.sin(elapsed * a.freq * Math.PI * 2 + a.phase)));
       }
 
-      // ── pulses ──
-      for (const p of pulses) {
-        p.t += p.speed;
-        if (p.t >= 1) { p.t -= 1; p.edge = (p.edge+1)%6; if (Math.random()<0.35) { p.hi=Math.floor(Math.random()*hexes.length); p.edge=Math.floor(Math.random()*6); } }
-      }
 
 
       ctx.lineCap = 'round';
@@ -223,11 +209,6 @@ export default function SceneBackground({ palette }) {
             trailI = Math.max(trailI, Math.max(0, 1 - Math.hypot(mx-trail[ti].x, my-trail[ti].y)/190)**2 * age * 0.5);
           }
 
-          // idle pulse (edge-by-edge)
-          let pulseI = 0;
-          for (const p of pulses)
-            if (p.hi===hi && p.edge===ei) pulseI = Math.max(pulseI, p.intensity * Math.sin(p.t*Math.PI));
-
           // ambient breathing
           const ambI = ambMap[hi] || 0;
 
@@ -242,7 +223,7 @@ export default function SceneBackground({ palette }) {
           // scan line
           const scanI = Math.max(0, 1 - Math.abs(my - scanY)/70) * 0.32;
 
-          const intensity = Math.min(1, cursorI + trailI + pulseI*0.55 + ambI + rippleI + scanI);
+          const intensity = Math.min(1, cursorI + trailI + ambI + rippleI + scanI);
           if (intensity < 0.025) continue;
 
           drawEdge(ctx, v1, v2, col, intensity);
