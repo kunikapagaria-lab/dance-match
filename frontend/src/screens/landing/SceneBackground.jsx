@@ -1,206 +1,288 @@
 import { useEffect, useRef } from 'react';
 
-const HEX_R = 95;                           // bigger hexagons
-const COL_W = HEX_R * Math.sqrt(3);
-const ROW_H = HEX_R * 1.5;
-const PULSE_COUNT = 3;
+// ── constants ─────────────────────────────────────────────────────────────────
+const HEX_R        = 95;
+const COL_W        = HEX_R * Math.sqrt(3);
+const ROW_H        = HEX_R * 1.5;
+const HEX_R2       = HEX_R * 1.4;          // depth-layer hex size
+const COL_W2       = HEX_R2 * Math.sqrt(3);
+const ROW_H2       = HEX_R2 * 1.5;
+const PULSE_COUNT  = 4;
+const AMBIENT_CNT  = 6;
+const TRAIL_LEN    = 30;
+const SCAN_SPEED   = 110;                    // px / second
+const RIPPLE_MAXR  = 400;
+const GRAVITY_PX   = 6;                     // max vertex pull toward cursor
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-
+// ── helpers ───────────────────────────────────────────────────────────────────
 function parseHex(hex = '#ff1f3d') {
   const h = hex.replace('#', '');
-  return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16),
-  };
+  return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
 }
 
-function hexVerts(cx, cy) {
+function hexVerts(cx, cy, r = HEX_R, hot = null) {
   return Array.from({ length: 6 }, (_, i) => {
     const a = (Math.PI / 3) * i - Math.PI / 6;
-    return { x: cx + HEX_R * Math.cos(a), y: cy + HEX_R * Math.sin(a) };
+    let x = cx + r * Math.cos(a);
+    let y = cy + r * Math.sin(a);
+    if (hot) {
+      const d = Math.hypot(x - hot.x, y - hot.y);
+      const pull = Math.max(0, 1 - d / 220) * GRAVITY_PX;
+      if (d > 0) { x += (hot.x - x) / d * pull; y += (hot.y - y) / d * pull; }
+    }
+    return { x, y };
   });
 }
 
-function buildGrid(w, h) {
-  const cols = Math.ceil(w / COL_W) + 3;
-  const rows = Math.ceil(h / ROW_H) + 3;
+function buildGrid(w, h, r, cw, rh, offX = 0, offY = 0) {
+  const cols = Math.ceil(w / cw) + 3;
+  const rows = Math.ceil(h / rh) + 3;
   const out  = [];
   for (let row = 0; row < rows; row++)
     for (let col = 0; col < cols; col++)
-      out.push({
-        cx: col * COL_W + (row % 2 === 1 ? COL_W / 2 : 0) - COL_W,
-        cy: row * ROW_H - ROW_H,
-      });
+      out.push({ cx: col * cw + (row % 2 ? cw / 2 : 0) - cw + offX,
+                 cy: row * rh - rh + offY });
   return out;
 }
 
-function makePulse(hexes) {
-  return {
-    hi:        Math.floor(Math.random() * hexes.length),
-    edge:      Math.floor(Math.random() * 6),
-    t:         Math.random(),
-    speed:     0.004 + Math.random() * 0.006,
-    intensity: 0.45 + Math.random() * 0.45,
-  };
+function buildNeighbors(hexes) {
+  const nb  = hexes.map(() => []);
+  const thr = COL_W * 1.08;
+  for (let i = 0; i < hexes.length; i++)
+    for (let j = i + 1; j < hexes.length; j++)
+      if (Math.hypot(hexes[i].cx - hexes[j].cx, hexes[i].cy - hexes[j].cy) < thr)
+        { nb[i].push(j); nb[j].push(i); }
+  return nb;
 }
 
-function drawEdge(ctx, v1, v2, col, intensity) {
-  const { r, g, b } = col;
+function makePulse(hexes) {
+  return { hi: Math.floor(Math.random() * hexes.length),
+           edge: Math.floor(Math.random() * 6),
+           t: Math.random(), speed: 0.004 + Math.random() * 0.006,
+           intensity: 0.5 + Math.random() * 0.4 };
+}
 
-  // bloom
+function makeAmbient(hexes) {
+  return Array.from({ length: AMBIENT_CNT }, (_, i) => ({
+    hi:    Math.floor((i / AMBIENT_CNT + 0.05) * hexes.length),
+    phase: (i / AMBIENT_CNT) * Math.PI * 2,
+    freq:  0.35 + Math.random() * 0.4,
+    peak:  0.5  + Math.random() * 0.35,
+    nextSwap: performance.now() + 3000 + Math.random() * 4000,
+  }));
+}
+
+function bloomCol({ r, g, b }) {
+  const max = Math.max(r, g, b);
+  if (max === r) return { r: Math.min(255, r+25), g: Math.min(255, g+12), b };
+  if (max === b) return { r, g: Math.min(255, g+18), b: Math.min(255, b+8) };
+  return { r: Math.min(255, r+10), g: Math.min(255, g+10), b: Math.min(255, b+10) };
+}
+
+function drawEdge(ctx, v1, v2, core, intensity) {
+  if (intensity < 0.02) return;
+  const bloom = bloomCol(core);
+  const { r, g, b } = core;
+  const { r: br, g: bg, b: bb } = bloom;
+
   ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y);
-  ctx.lineWidth   = 14;
-  ctx.strokeStyle = `rgba(${r},${g},${b},${(intensity * 0.18).toFixed(3)})`;
+  ctx.lineWidth   = 16;
+  ctx.strokeStyle = `rgba(${br},${bg},${bb},${(intensity * 0.14).toFixed(3)})`;
   ctx.stroke();
 
-  // mid glow
   ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y);
   ctx.lineWidth   = 5;
-  ctx.strokeStyle = `rgba(${r},${g},${b},${(intensity * 0.45).toFixed(3)})`;
+  ctx.strokeStyle = `rgba(${br},${bg},${bb},${(intensity * 0.38).toFixed(3)})`;
   ctx.stroke();
 
-  // core
   ctx.beginPath(); ctx.moveTo(v1.x, v1.y); ctx.lineTo(v2.x, v2.y);
   ctx.lineWidth   = 1.3;
-  ctx.strokeStyle = `rgba(${r},${g},${b},${Math.min(0.95, intensity * 0.95).toFixed(3)})`;
+  ctx.strokeStyle = `rgba(${r},${g},${b},${Math.min(0.95, intensity * 0.92).toFixed(3)})`;
   ctx.stroke();
 }
 
-// ── component ─────────────────────────────────────────────────────────────────
-
+// ── component ──────────────────────────────────────────────────────────────────
 export default function SceneBackground({ palette }) {
   const canvasRef = useRef(null);
-  const colorRef  = useRef(parseHex('#ff1f3d'));  // updated live from palette prop
+  const colorRef  = useRef(parseHex('#ff1f3d'));
 
-  // Sync color whenever avatar changes
   useEffect(() => {
     if (palette?.accent) colorRef.current = parseHex(palette.accent);
   }, [palette?.accent]);
 
-  // Canvas setup — runs once
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx    = canvas.getContext('2d');
     const dpr    = Math.min(window.devicePixelRatio || 1, 2);
 
     let W = 0, H = 0;
-    let hexes   = [];
-    let pulses  = [];
-    let ambient = [];   // always-on breathing hexagons
+    let hexes = [], hexes2 = [], neighbors = [];
+    let pulses = [], ambient = [];
+    let ripples  = [];                   // [{ x,y,t,speed }]
+    let lightning = null;                // { chain[], t, speed }
+    let nextLightning = performance.now() + 4000;
+    let trail    = [];                   // [{ x, y }]
+    let scanY    = 0;
     let rafId;
-    let t0 = performance.now();
+    let lastTime = performance.now();
 
-    let mouse  = { x: 0, y: 0 };
-    let hot    = { x: 0, y: 0 };
-    let scrollY = 0;
+    // smooth display colour (avatar transition)
+    let dispCol = { ...colorRef.current };
 
-    function makeAmbient(hexes) {
-      // 5 hexagons that always glow, spread across the grid
-      return Array.from({ length: 5 }, (_, i) => ({
-        hi:    Math.floor((i / 5 + Math.random() * 0.15) * hexes.length),
-        phase: (i / 5) * Math.PI * 2,              // evenly spread phases
-        freq:  0.4 + Math.random() * 0.4,           // breath speed
-        peak:  0.45 + Math.random() * 0.35,         // max glow
-        nextSwap: performance.now() + 3000 + Math.random() * 4000,
-      }));
-    }
+    let mouse = { x: 0, y: 0 };
+    let hot   = { x: 0, y: 0 };
 
     function resize() {
-      W = window.innerWidth;
-      H = window.innerHeight;
-      canvas.width        = W * dpr;
-      canvas.height       = H * dpr;
-      canvas.style.width  = `${W}px`;
-      canvas.style.height = `${H}px`;
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
       ctx.scale(dpr, dpr);
-      hexes   = buildGrid(W, H);
-      pulses  = Array.from({ length: PULSE_COUNT }, () => makePulse(hexes));
-      ambient = makeAmbient(hexes);
-      mouse   = { x: W / 2, y: H * 0.35 };
-      hot     = { ...mouse };
+      hexes     = buildGrid(W, H, HEX_R,  COL_W,  ROW_H);
+      hexes2    = buildGrid(W, H, HEX_R2, COL_W2, ROW_H2, COL_W2*0.5, ROW_H2*0.5);
+      neighbors = buildNeighbors(hexes);
+      pulses    = Array.from({ length: PULSE_COUNT }, () => makePulse(hexes));
+      ambient   = makeAmbient(hexes);
+      mouse     = { x: W/2, y: H*0.4 }; hot = { ...mouse };
+      scanY     = 0; trail = [];
+    }
+
+    function spawnLightning() {
+      const startHi = Math.floor(Math.random() * hexes.length);
+      const chain   = [startHi];
+      let cur = startHi;
+      for (let i = 0; i < 11; i++) {
+        const nb = neighbors[cur].filter(n => !chain.includes(n));
+        if (!nb.length) break;
+        cur = nb[Math.floor(Math.random() * nb.length)];
+        chain.push(cur);
+      }
+      return { chain, t: 0, speed: 0.055 };
     }
 
     function draw(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      const elapsed = now / 1000;
+
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = '#05050a';
       ctx.fillRect(0, 0, W, H);
 
-      const elapsed = (now - t0) / 1000; // seconds
+      // ── smooth avatar colour transition ──
+      dispCol.r += (colorRef.current.r - dispCol.r) * 0.04;
+      dispCol.g += (colorRef.current.g - dispCol.g) * 0.04;
+      dispCol.b += (colorRef.current.b - dispCol.b) * 0.04;
+      const col = { r: Math.round(dispCol.r), g: Math.round(dispCol.g), b: Math.round(dispCol.b) };
 
-      // smooth hotspot toward cursor
+      // ── smooth hotspot + trail ──
       hot.x += (mouse.x - hot.x) * 0.06;
       hot.y += (mouse.y - hot.y) * 0.06;
+      trail.push({ x: hot.x, y: hot.y });
+      if (trail.length > TRAIL_LEN) trail.shift();
 
-      // update ambient hexagons — breathe + occasionally swap to new hex
+      // ── scan line ──
+      scanY += SCAN_SPEED * dt;
+      if (scanY > H + 60) scanY = -60;
+
+      // ── ripples ──
+      for (const rp of ripples) rp.t += dt * 0.9;
+      ripples = ripples.filter(rp => rp.t < 1.3);
+
+      // ── ambient ──
+      const ambMap = new Float32Array(hexes.length);
       for (const a of ambient) {
-        if (now > a.nextSwap) {
-          a.hi       = Math.floor(Math.random() * hexes.length);
-          a.nextSwap = now + 3000 + Math.random() * 4000;
-        }
+        if (now > a.nextSwap) { a.hi = Math.floor(Math.random() * hexes.length); a.nextSwap = now + 3000 + Math.random() * 4000; }
+        ambMap[a.hi] = Math.max(ambMap[a.hi], a.peak * (0.5 + 0.5 * Math.sin(elapsed * a.freq * Math.PI * 2 + a.phase)));
       }
 
-      // build a quick lookup: hexIndex → ambient intensity
-      const ambientMap = new Float32Array(hexes.length);
-      for (const a of ambient) {
-        const intensity = a.peak * (0.5 + 0.5 * Math.sin(elapsed * a.freq * Math.PI * 2 + a.phase));
-        ambientMap[a.hi] = Math.max(ambientMap[a.hi], intensity);
-      }
-
-      // advance pulses
+      // ── pulses ──
       for (const p of pulses) {
         p.t += p.speed;
-        if (p.t >= 1) {
-          p.t -= 1;
-          p.edge = (p.edge + 1) % 6;
-          if (Math.random() < 0.35) {
-            p.hi   = Math.floor(Math.random() * hexes.length);
-            p.edge = Math.floor(Math.random() * 6);
-          }
-        }
+        if (p.t >= 1) { p.t -= 1; p.edge = (p.edge+1)%6; if (Math.random()<0.35) { p.hi=Math.floor(Math.random()*hexes.length); p.edge=Math.floor(Math.random()*6); } }
       }
 
-      const col = colorRef.current;
+      // ── lightning ──
+      if (!lightning && now > nextLightning) lightning = spawnLightning();
+      if (lightning) {
+        lightning.t += lightning.speed;
+        if (lightning.t > 1.4) { lightning = null; nextLightning = now + 4000 + Math.random() * 3000; }
+      }
+
       ctx.lineCap = 'round';
 
+      // ── depth layer (background grid, no glow) ──
+      for (const { cx, cy } of hexes2) {
+        const v = hexVerts(cx, cy, HEX_R2);
+        ctx.beginPath();
+        v.forEach((pt, i) => (i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
+        ctx.closePath();
+        ctx.fillStyle   = '#080810';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+        ctx.lineWidth   = 0.6;
+        ctx.stroke();
+      }
+
+      // ── main hex grid ──
       for (let hi = 0; hi < hexes.length; hi++) {
         const { cx, cy } = hexes[hi];
-        const verts = hexVerts(cx, cy);
+        const verts = hexVerts(cx, cy, HEX_R, hot);  // gravity pull
 
-        // hex fill
         ctx.beginPath();
         verts.forEach((v, i) => (i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y)));
         ctx.closePath();
-        ctx.fillStyle   = '#0a0a12';
+        ctx.fillStyle   = '#0a0a14';
         ctx.fill();
-
-        // base border
-        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-        ctx.lineWidth   = 0.7;
+        ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+        ctx.lineWidth   = 0.8;
         ctx.stroke();
 
-        // glowing edges
         for (let ei = 0; ei < 6; ei++) {
           const v1 = verts[ei];
-          const v2 = verts[(ei + 1) % 6];
+          const v2 = verts[(ei+1)%6];
           const mx = (v1.x + v2.x) * 0.5;
           const my = (v1.y + v2.y) * 0.5;
 
-          // cursor glow
-          const dist    = Math.hypot(mx - hot.x, my - hot.y);
-          const cursorI = Math.max(0, 1 - dist / 260) ** 2;
+          // cursor spotlight
+          const cursorI = Math.max(0, 1 - Math.hypot(mx-hot.x, my-hot.y)/260)**2;
 
-          // idle pulse glow (single edge travelling)
+          // trail glow
+          let trailI = 0;
+          for (let ti = 0; ti < trail.length; ti++) {
+            const age = ti / trail.length;
+            trailI = Math.max(trailI, Math.max(0, 1 - Math.hypot(mx-trail[ti].x, my-trail[ti].y)/190)**2 * age * 0.5);
+          }
+
+          // idle pulse (edge-by-edge)
           let pulseI = 0;
           for (const p of pulses)
-            if (p.hi === hi && p.edge === ei)
-              pulseI = Math.max(pulseI, p.intensity * Math.sin(p.t * Math.PI));
+            if (p.hi===hi && p.edge===ei) pulseI = Math.max(pulseI, p.intensity * Math.sin(p.t*Math.PI));
 
-          // ambient breathing glow (all edges of chosen hexagons)
-          const ambientI = ambientMap[hi] || 0;
+          // ambient breathing
+          const ambI = ambMap[hi] || 0;
 
-          const intensity = Math.min(1, cursorI + pulseI * 0.55 + ambientI);
+          // lightning
+          let lightI = 0;
+          if (lightning) {
+            const ci = lightning.chain.indexOf(hi);
+            if (ci >= 0) {
+              const localT = lightning.t * lightning.chain.length - ci;
+              lightI = Math.max(0, 1 - Math.abs(localT - 0.5) * 3.5) * 0.95;
+            }
+          }
+
+          // ripple
+          let rippleI = 0;
+          for (const rp of ripples) {
+            const d = Math.hypot(mx - rp.x, my - rp.y);
+            const target = rp.t * RIPPLE_MAXR;
+            rippleI = Math.max(rippleI, Math.max(0, 1 - Math.abs(d - target)/55) * (1 - rp.t*0.75) * 0.8);
+          }
+
+          // scan line
+          const scanI = Math.max(0, 1 - Math.abs(my - scanY)/70) * 0.32;
+
+          const intensity = Math.min(1, cursorI + trailI + pulseI*0.55 + ambI + lightI + rippleI + scanI);
           if (intensity < 0.025) continue;
 
           drawEdge(ctx, v1, v2, col, intensity);
@@ -210,22 +292,19 @@ export default function SceneBackground({ palette }) {
       rafId = requestAnimationFrame(draw);
     }
 
-    // events
+    // ── events ──
     const onMouse  = (e) => { mouse.x = e.clientX; mouse.y = e.clientY; };
-    const onTouch  = (e) => {
-      if (e.touches[0]) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }
-    };
-    const onOrient = (e) => {
-      if (e.gamma == null) return;
-      mouse.x = W / 2 + (e.gamma / 90) * W * 0.45;
-      mouse.y = H / 2 + (Math.min(45, Math.max(-45, e.beta || 0)) / 45) * H * 0.35;
-    };
-    const onScroll = () => { scrollY = window.scrollY; };
+    const onTouch  = (e) => { if (e.touches[0]) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; } };
+    const onOrient = (e) => { if (e.gamma==null) return; mouse.x = W/2+(e.gamma/90)*W*0.45; mouse.y = H/2+(Math.min(45,Math.max(-45,e.beta||0))/45)*H*0.35; };
+    const onScroll = () => {};
+    const onClick  = (e) => { ripples.push({ x: e.clientX, y: e.clientY, t: 0 }); };
 
-    window.addEventListener('mousemove',        onMouse);
-    window.addEventListener('touchmove',        onTouch,  { passive: true });
+    window.addEventListener('mousemove',         onMouse);
+    window.addEventListener('click',             onClick);
+    window.addEventListener('touchmove',         onTouch,  { passive: true });
+    window.addEventListener('touchstart',        onTouch,  { passive: true });
     window.addEventListener('deviceorientation', onOrient);
-    window.addEventListener('scroll',           onScroll, { passive: true });
+    window.addEventListener('scroll',            onScroll, { passive: true });
 
     const ro = new ResizeObserver(resize);
     ro.observe(document.documentElement);
@@ -236,17 +315,14 @@ export default function SceneBackground({ palette }) {
     return () => {
       cancelAnimationFrame(rafId);
       ro.disconnect();
-      window.removeEventListener('mousemove',         onMouse);
-      window.removeEventListener('touchmove',         onTouch);
-      window.removeEventListener('deviceorientation', onOrient);
-      window.removeEventListener('scroll',            onScroll);
+      window.removeEventListener('mousemove',          onMouse);
+      window.removeEventListener('click',              onClick);
+      window.removeEventListener('touchmove',          onTouch);
+      window.removeEventListener('touchstart',         onTouch);
+      window.removeEventListener('deviceorientation',  onOrient);
+      window.removeEventListener('scroll',             onScroll);
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: 'fixed', inset: 0, zIndex: -1, display: 'block' }}
-    />
-  );
+  return <canvas ref={canvasRef} style={{ position:'fixed', inset:0, zIndex:-1, display:'block' }} />;
 }
