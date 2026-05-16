@@ -102,7 +102,7 @@ export default function Countdown() {
               </defs>
               <polygon
                 points="90,18 158,57 158,143 90,182 22,143 22,57"
-                fill="rgba(0,0,0,0.55)"
+                fill="transparent"
                 stroke="var(--accent, #ff1f3d)"
                 strokeWidth={1.5}
                 filter="url(#hglow2)"
@@ -131,9 +131,9 @@ export default function Countdown() {
                 </defs>
                 <polygon
                   points="90,10 166,52 166,148 90,190 14,148 14,52"
-                  fill="#0a0a12"
+                  fill="transparent"
                   stroke="var(--accent, #ff1f3d)"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   filter="url(#startglow)"
                 />
               </svg>
