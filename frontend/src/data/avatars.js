@@ -56,6 +56,25 @@ export const AVATARS = [
       wordmark:   'rgba(190,110,255,0.08)',
     },
   },
+  {
+    id: 'azure',
+    name: 'AZURE',
+    style: 'Electric Wave',
+    tag: 'Freestyle / Breakdance',
+    quote: 'Ride the current. Break the grid.',
+    glb: '/models/azure.glb',
+    hueShift: 180,
+    palette: {
+      accent:     '#00aaff',
+      accentSoft: '#5ecfff',
+      glow:       'rgba(0,170,255,0.55)',
+      glowSoft:   'rgba(0,170,255,0.22)',
+      base:       '#010810',
+      base2:      '#031828',
+      text:       '#d6f0ff',
+      wordmark:   'rgba(0,170,255,0.08)',
+    },
+  },
 ];
 
 export const FALLBACK_GLB = 'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb';
