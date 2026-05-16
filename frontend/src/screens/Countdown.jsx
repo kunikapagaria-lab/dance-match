@@ -93,6 +93,8 @@ export default function Countdown() {
           border: '1.5px solid var(--accent, #ff1f3d)',
           boxShadow: '0 0 20px var(--glow-soft, rgba(255,30,60,0.25))',
           overflow: 'hidden', width: 260, height: 195, position: 'relative',
+          animation: (countdownValue === null || countdownValue === undefined) && isHost
+            ? 'boxRingPulse 1.8s ease-in-out infinite' : 'none',
         }}>
           <video
             ref={videoRef}
@@ -121,7 +123,6 @@ export default function Countdown() {
                 border: '2.5px solid var(--accent)',
                 boxShadow: '0 0 24px var(--glow), 0 0 48px var(--glow-soft)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                animation: 'ringPulse 1.8s ease-out infinite',
               }}>
                 <svg width={24} height={24} viewBox="0 0 24 24" fill="var(--accent)" style={{ marginLeft: 4 }}>
                   <polygon points="5,3 19,12 5,21" />
@@ -167,6 +168,7 @@ export default function Countdown() {
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes ringPulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes boxRingPulse { 0%, 100% { box-shadow: 0 0 20px var(--glow-soft); } 50% { box-shadow: 0 0 40px var(--glow), 0 0 80px var(--glow-soft); } }
         @keyframes tapBlink { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.2; } }
       `}</style>
     </div>
