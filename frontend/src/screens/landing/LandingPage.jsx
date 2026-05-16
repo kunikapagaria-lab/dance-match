@@ -10,7 +10,7 @@ import '../../styles/neon.css';
 const S = {
   scene: (bg) => ({
     position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', zIndex: 1,
-    background: bg, transition: 'background 600ms ease',
+    background: 'transparent',
   }),
   header: {
     position: 'absolute', top: 32, left: 0, right: 0, zIndex: 10,

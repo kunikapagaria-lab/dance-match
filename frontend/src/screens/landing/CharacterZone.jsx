@@ -66,12 +66,6 @@ export default function CharacterZone({ avatar, parallax, swapping, onSwap }) {
       position: 'absolute', right: 56, top: '8%', bottom: '12%', width: '48%',
       perspective: '1400px', perspectiveOrigin: '50% 40%', zIndex: 10,
     }}>
-      {/* Breakout glow above frame */}
-      <div style={{
-        position: 'absolute', left: 0, right: 0, top: '-6%', height: '20%',
-        background: 'radial-gradient(ellipse 60% 100% at 50% 100%, var(--glow), transparent 70%)',
-        zIndex: 4, pointerEvents: 'none',
-      }} />
 
 
       {/* Character — breaks above the frame */}
