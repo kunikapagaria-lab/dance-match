@@ -109,11 +109,6 @@ export default function LandingPage() {
 
       <SceneBackground parallax={parallax} palette={palette} />
 
-      {/* Background wordmark */}
-      <div style={{ ...S.wordmark, transform: `translate3d(${parallax.x * -14}px, ${parallax.y * -6}px, 0)` }}>
-        <span style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(120px,22vw,360px)', color: palette.wordmark, lineHeight: 0.85, display: 'block' }}>DANCE</span>
-        <span style={{ fontFamily: 'Audiowide,cursive', fontSize: 'clamp(120px,22vw,360px)', color: palette.wordmark, lineHeight: 0.85, display: 'block' }}>MATCH</span>
-      </div>
 
       {/* Header */}
       <header style={S.header}>
