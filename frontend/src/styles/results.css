@@ -5,7 +5,7 @@
   padding: 2rem;
   gap: 2rem;
   align-items: center;
-  background: var(--bg-deep);
+  background: transparent;
 }
 
 /* Champion banner */

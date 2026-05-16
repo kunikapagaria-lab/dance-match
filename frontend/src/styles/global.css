@@ -29,7 +29,7 @@
 html, body, #root {
   height: 100%;
   width: 100%;
-  background: var(--bg-deep);
+  background: transparent;
   color: var(--text-primary);
   font-family: var(--font-body);
   overflow-x: hidden;
@@ -92,7 +92,7 @@ h2 {
   justify-content: center;
   height: 100vh;
   gap: 2rem;
-  background: var(--bg-deep);
+  background: transparent;
 }
 
 .countdown-level-name {
