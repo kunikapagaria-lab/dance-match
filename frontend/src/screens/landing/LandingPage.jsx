@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AVATARS } from '../../data/avatars.js';
 import { useParallax } from '../../hooks/useParallax.js';
@@ -76,6 +76,11 @@ export default function LandingPage() {
   const avatar = AVATARS[activeIdx];
   const palette = avatar.palette;
 
+  // Keep gameState.palette in sync so SceneBackground always shows current avatar colour
+  useEffect(() => {
+    setGameState(s => ({ ...s, palette }));
+  }, [activeIdx]);
+
   const cssVars = {
     '--accent':      palette.accent,
     '--accent-soft': palette.accentSoft,
@@ -89,7 +94,11 @@ export default function LandingPage() {
     if (swapping) return;
     setSwapping(true);
     setTimeout(() => {
-      setActiveIdx(i => (i + dir + AVATARS.length) % AVATARS.length);
+      setActiveIdx(i => {
+        const next = (i + dir + AVATARS.length) % AVATARS.length;
+        setGameState(s => ({ ...s, palette: AVATARS[next].palette }));
+        return next;
+      });
       setTimeout(() => setSwapping(false), 50);
     }, 220);
   }, [swapping]);
