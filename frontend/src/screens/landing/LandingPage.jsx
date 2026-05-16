@@ -4,7 +4,6 @@ import { AVATARS } from '../../data/avatars.js';
 import { useParallax } from '../../hooks/useParallax.js';
 import { useKeyboardSwap } from '../../hooks/useKeyboardSwap.js';
 import { useGame } from '../../App.jsx';
-import SceneBackground from './SceneBackground.jsx';
 import CharacterZone from './CharacterZone.jsx';
 import '../../styles/neon.css';
 
@@ -107,7 +106,6 @@ export default function LandingPage() {
   return (
     <div ref={containerRef} style={{ ...S.scene(palette.base), ...cssVars }}>
 
-      <SceneBackground parallax={parallax} palette={palette} />
 
 
       {/* Header */}

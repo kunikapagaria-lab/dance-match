@@ -2,7 +2,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import socket from './socket.js';
 import { AVATARS } from './data/avatars.js';
-import NeonBackground from './components/NeonBackground.jsx';
+import SceneBackground from './screens/landing/SceneBackground.jsx';
 import LandingPage from './screens/landing/LandingPage.jsx';
 import SoloSetup from './screens/SoloSetup.jsx';
 import Lobby from './screens/Lobby.jsx';
@@ -129,7 +129,7 @@ export default function App() {
 
   return (
     <GameContext.Provider value={ctx}>
-      <NeonBackground />
+      <SceneBackground palette={gameState.palette} />
       <BackButton />
       <Routes>
         <Route path="/"           element={<LandingPage />} />
