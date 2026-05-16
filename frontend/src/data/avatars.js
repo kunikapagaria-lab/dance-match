@@ -94,6 +94,25 @@ export const AVATARS = [
       wordmark:   'rgba(255,215,0,0.08)',
     },
   },
+  {
+    id: 'ember',
+    name: 'EMBER',
+    style: 'Crimson Rush',
+    tag: 'Locking / Power Moves',
+    quote: 'Fury is a rhythm too.',
+    glb: '/models/ember.glb',
+    hueShift: 300,
+    palette: {
+      accent:     '#ff2200',
+      accentSoft: '#ff6644',
+      glow:       'rgba(255,34,0,0.55)',
+      glowSoft:   'rgba(255,34,0,0.22)',
+      base:       '#0d0100',
+      base2:      '#1a0500',
+      text:       '#ffeae6',
+      wordmark:   'rgba(255,34,0,0.08)',
+    },
+  },
 ];
 
 export const FALLBACK_GLB = 'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb';
