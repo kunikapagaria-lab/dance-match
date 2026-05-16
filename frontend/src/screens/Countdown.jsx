@@ -125,16 +125,6 @@ export default function Countdown() {
               animation: 'tapBlink 1.6s ease-in-out infinite',
             }}>TAP TO BEGIN</span>
           </div>
-          <style>{`
-            @keyframes ringPulse {
-              0%   { transform: scale(1);   opacity: 0.5; }
-              100% { transform: scale(1.5); opacity: 0; }
-            }
-            @keyframes tapBlink {
-              0%, 100% { opacity: 0.6; }
-              50%       { opacity: 0.2; }
-            }
-          `}</style>
         ) : (
           <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 16, color: 'white', textAlign: 'center', opacity: 0.6 }}>
             WAITING<br/>FOR HOST
@@ -192,7 +182,11 @@ export default function Countdown() {
         </div>
       </div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes ringPulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes tapBlink { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.2; } }
+      `}</style>
     </div>
   );
 }
