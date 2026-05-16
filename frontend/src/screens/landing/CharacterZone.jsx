@@ -10,14 +10,14 @@ function SwapArrow({ dir, onClick }) {
         position: 'fixed', top: '50%', zIndex: 50,
         [isLeft ? 'left' : 'right']: 0,
         transform: 'translateY(-50%)',
-        width: isLeft ? 64 : 52, height: 120,
+        width: 64, height: 120,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: isLeft ? 'rgba(0,0,0,0.3)' : 'transparent',
+        background: 'rgba(0,0,0,0.3)',
         border: 'none',
         borderRight: isLeft ? '1px solid rgba(255,255,255,0.1)' : 'none',
-        borderLeft:  isLeft ? 'none' : '1px solid rgba(255,255,255,0.08)',
+        borderLeft:  isLeft ? 'none' : '1px solid rgba(255,255,255,0.1)',
         cursor: 'pointer', outline: 'none',
-        opacity: isLeft ? 0.6 : 0.2,
+        opacity: 0.6,
         transition: 'opacity 200ms ease, background 200ms ease',
       }}
       onMouseEnter={e => {
@@ -28,12 +28,12 @@ function SwapArrow({ dir, onClick }) {
           : '-6px 0 24px var(--glow-soft)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.opacity = isLeft ? '0.6' : '0.2';
-        e.currentTarget.style.background = isLeft ? 'rgba(0,0,0,0.3)' : 'transparent';
+        e.currentTarget.style.opacity = '0.6';
+        e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <svg width={isLeft ? 28 : 18} height={isLeft ? 28 : 18} viewBox="0 0 14 14" fill="none" stroke="var(--accent)" strokeWidth={isLeft ? 3 : 2.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={28} height={28} viewBox="0 0 14 14" fill="none" stroke="var(--accent)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
         {isLeft ? <path d="M10 2L4 7l6 5" /> : <path d="M4 2l6 5-6 5" />}
       </svg>
     </button>
