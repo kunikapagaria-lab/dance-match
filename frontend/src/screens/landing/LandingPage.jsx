@@ -23,8 +23,8 @@ const S = {
     pointerEvents: 'none', userSelect: 'none', overflow: 'hidden',
   },
   hero: {
-    position: 'absolute', left: 56, top: '50%', transform: 'translateY(-50%)',
-    width: '46%', maxWidth: 620, zIndex: 10,
+    position: 'absolute', left: 100, top: '50%', transform: 'translateY(-50%)',
+    width: '44%', maxWidth: 600, zIndex: 10,
   },
   eyebrow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 },
   modeRow: { display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 24 },
