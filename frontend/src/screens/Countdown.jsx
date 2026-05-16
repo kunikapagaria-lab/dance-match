@@ -72,64 +72,14 @@ export default function Countdown() {
         <span>←</span>
         <span>BACK</span>
       </button>
-      {/* Countdown number or START button */}
-      {countdownValue !== undefined && countdownValue !== null ? (
+      {/* Countdown number — above the video, only when counting */}
+      {countdownValue !== undefined && countdownValue !== null && (
         <span ref={numRef} style={{
           fontFamily: 'Audiowide,cursive', fontSize: 110, color: 'white', lineHeight: 1,
           textShadow: '0 0 40px var(--glow, rgba(255,30,60,0.7)), 0 0 80px var(--glow-soft, rgba(255,30,60,0.3))',
         }}>
           {countdownValue}
         </span>
-      ) : (
-        isHost ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-            <div style={{ position: 'relative' }}>
-              {/* Pulsing ring behind the button */}
-              <div style={{
-                position: 'absolute', inset: -12,
-                border: '2px solid var(--accent)',
-                borderRadius: 6, opacity: 0.4,
-                animation: 'ringPulse 1.6s ease-out infinite',
-                pointerEvents: 'none',
-              }} />
-              <button onClick={handleStartCountdown} style={{
-                background: 'var(--accent)',
-                border: '2px solid var(--accent)',
-                outline: 'none', cursor: 'pointer',
-                padding: '10px 28px',
-                fontFamily: 'Audiowide,cursive', fontSize: 13,
-                color: '#000',
-                letterSpacing: '0.35em',
-                fontWeight: 700,
-                boxShadow: '0 0 40px var(--glow), 0 0 80px var(--glow-soft)',
-                borderRadius: 4,
-                transition: 'all 0.15s ease',
-                position: 'relative', zIndex: 1,
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'scale(1.06)';
-                e.currentTarget.style.boxShadow = '0 0 70px var(--glow), 0 0 140px var(--glow-soft)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 0 40px var(--glow), 0 0 80px var(--glow-soft)';
-              }}
-              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-              onMouseUp={e => e.currentTarget.style.transform = 'scale(1.06)'}>
-                ▶ &nbsp;START
-              </button>
-            </div>
-            <span style={{
-              fontFamily: 'Rajdhani,sans-serif', fontSize: 12,
-              letterSpacing: '0.3em', color: 'var(--accent)', opacity: 0.6,
-              animation: 'tapBlink 1.6s ease-in-out infinite',
-            }}>TAP TO BEGIN</span>
-          </div>
-        ) : (
-          <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 16, color: 'white', textAlign: 'center', opacity: 0.6 }}>
-            WAITING<br/>FOR HOST
-          </div>
-        )
       )}
 
       {/* Instruction */}
@@ -137,28 +87,60 @@ export default function Countdown() {
         GET READY TO DANCE
       </div>
 
-      {/* Live camera preview — user frames themselves */}
+      {/* Live camera preview — play button overlaid on video */}
       <div style={{ position: 'relative', marginTop: 8 }}>
         <div style={{
           border: '1.5px solid var(--accent, #ff1f3d)',
           boxShadow: '0 0 20px var(--glow-soft, rgba(255,30,60,0.25))',
-          overflow: 'hidden',
-          width: 260, height: 195,
-          position: 'relative',
+          overflow: 'hidden', width: 260, height: 195, position: 'relative',
         }}>
           <video
             ref={videoRef}
             style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', display: 'block' }}
-            playsInline
-            muted
+            playsInline muted
           />
-          {/* Scanning Animation overlay */}
+
+          {/* Scanning overlay during countdown */}
           {countdownValue !== null && countdownValue !== undefined && (
-            <>
-              <div className="scanner-line" />
-              <div className="scanner-grid" />
-            </>
+            <><div className="scanner-line" /><div className="scanner-grid" /></>
           )}
+
+          {/* Play button — overlaid on video, only when waiting */}
+          {(countdownValue === null || countdownValue === undefined) && isHost && (
+            <button onClick={handleStartCountdown} style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%',
+              background: 'rgba(0,0,0,0.35)', border: 'none', outline: 'none',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.35)'}>
+              <div style={{
+                width: 64, height: 64, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.6)',
+                border: '2.5px solid var(--accent)',
+                boxShadow: '0 0 24px var(--glow), 0 0 48px var(--glow-soft)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                animation: 'ringPulse 1.8s ease-out infinite',
+              }}>
+                <svg width={24} height={24} viewBox="0 0 24 24" fill="var(--accent)" style={{ marginLeft: 4 }}>
+                  <polygon points="5,3 19,12 5,21" />
+                </svg>
+              </div>
+            </button>
+          )}
+
+          {/* Waiting for host message */}
+          {(countdownValue === null || countdownValue === undefined) && !isHost && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.4)',
+              fontFamily: 'Audiowide,cursive', fontSize: 13, color: 'white', textAlign: 'center', opacity: 0.75,
+            }}>
+              WAITING<br/>FOR HOST
+            </div>
+          )}
+
           {/* Corner brackets */}
           {['tl','tr','bl','br'].map(p => (
             <span key={p} style={{
