@@ -7,10 +7,11 @@ const ROW_H        = HEX_R * 1.5;
 const HEX_R2       = HEX_R * 1.4;          // depth-layer hex size
 const COL_W2       = HEX_R2 * Math.sqrt(3);
 const ROW_H2       = HEX_R2 * 1.5;
+const PULSE_COUNT  = 4;
 const AMBIENT_CNT  = 6;
 const TRAIL_LEN    = 30;
 const RIPPLE_MAXR  = 400;
-const GRAVITY_PX   = 6;                     // max vertex pull toward cursor
+const GRAVITY_PX   = 6;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 function parseHex(hex = '#ff1f3d') {
@@ -43,6 +44,23 @@ function buildGrid(w, h, r, cw, rh, offX = 0, offY = 0) {
   return out;
 }
 
+
+function makePulse(hexes) {
+  return { hi: Math.floor(Math.random() * hexes.length),
+           edge: Math.floor(Math.random() * 6),
+           t: Math.random(), speed: 0.004 + Math.random() * 0.006,
+           intensity: 0.5 + Math.random() * 0.4 };
+}
+
+function buildNeighbors(hexes) {
+  const nb = hexes.map(() => []);
+  const thr = COL_W * 1.08;
+  for (let i = 0; i < hexes.length; i++)
+    for (let j = i + 1; j < hexes.length; j++)
+      if (Math.hypot(hexes[i].cx - hexes[j].cx, hexes[i].cy - hexes[j].cy) < thr)
+        { nb[i].push(j); nb[j].push(i); }
+  return nb;
+}
 
 function makeAmbient(hexes) {
   return Array.from({ length: AMBIENT_CNT }, (_, i) => ({
@@ -98,8 +116,10 @@ export default function SceneBackground({ palette }) {
     const dpr    = Math.min(window.devicePixelRatio || 1, 2);
 
     let W = 0, H = 0;
-    let hexes = [], hexes2 = [];
-    let ambient = [];
+    let hexes = [], hexes2 = [], neighbors = [];
+    let pulses = [], ambient = [];
+    let lightning = null;
+    let nextLightning = performance.now() + 4000;
     let ripples  = [];                   // [{ x,y,t,speed }]
     let trail    = [];                   // [{ x, y }]
     let rafId;
@@ -118,7 +138,9 @@ export default function SceneBackground({ palette }) {
       ctx.scale(dpr, dpr);
       hexes  = buildGrid(W, H, HEX_R,  COL_W,  ROW_H);
       hexes2 = buildGrid(W, H, HEX_R2, COL_W2, ROW_H2, COL_W2*0.5, ROW_H2*0.5);
-      ambient = makeAmbient(hexes);
+      neighbors = buildNeighbors(hexes);
+      pulses    = Array.from({ length: PULSE_COUNT }, () => makePulse(hexes));
+      ambient   = makeAmbient(hexes);
       mouse     = { x: W/2, y: H*0.4 }; hot = { ...mouse };
       trail = [];
     }
@@ -157,6 +179,28 @@ export default function SceneBackground({ palette }) {
       }
 
 
+
+      // ── pulses ──
+      for (const p of pulses) {
+        p.t += p.speed;
+        if (p.t >= 1) { p.t -= 1; p.edge = (p.edge+1)%6; if (Math.random()<0.35) { p.hi=Math.floor(Math.random()*hexes.length); p.edge=Math.floor(Math.random()*6); } }
+      }
+
+      // ── lightning ──
+      if (!lightning && now > nextLightning) {
+        const start = Math.floor(Math.random() * hexes.length);
+        const chain = [start]; let cur = start;
+        for (let i = 0; i < 11; i++) {
+          const nb = neighbors[cur].filter(n => !chain.includes(n));
+          if (!nb.length) break;
+          cur = nb[Math.floor(Math.random() * nb.length)]; chain.push(cur);
+        }
+        lightning = { chain, t: 0, speed: 0.055 };
+      }
+      if (lightning) {
+        lightning.t += lightning.speed;
+        if (lightning.t > 1.4) { lightning = null; nextLightning = now + 4000 + Math.random() * 3000; }
+      }
 
       ctx.lineCap = 'round';
 
@@ -203,6 +247,21 @@ export default function SceneBackground({ palette }) {
             trailI = Math.max(trailI, Math.max(0, 1 - Math.hypot(mx-trail[ti].x, my-trail[ti].y)/190)**2 * age * 0.5);
           }
 
+          // idle pulse (edge-by-edge)
+          let pulseI = 0;
+          for (const p of pulses)
+            if (p.hi===hi && p.edge===ei) pulseI = Math.max(pulseI, p.intensity * Math.sin(p.t*Math.PI));
+
+          // lightning
+          let lightI = 0;
+          if (lightning) {
+            const ci = lightning.chain.indexOf(hi);
+            if (ci >= 0) {
+              const localT = lightning.t * lightning.chain.length - ci;
+              lightI = Math.max(0, 1 - Math.abs(localT - 0.5) * 3.5) * 0.95;
+            }
+          }
+
           // ambient breathing
           const ambI = ambMap[hi] || 0;
 
@@ -214,7 +273,7 @@ export default function SceneBackground({ palette }) {
             rippleI = Math.max(rippleI, Math.max(0, 1 - Math.abs(d - target)/55) * (1 - rp.t*0.75) * 0.8);
           }
 
-          const intensity = Math.min(1, cursorI + trailI + ambI + rippleI);
+          const intensity = Math.min(1, cursorI + trailI + pulseI*0.55 + lightI + ambI + rippleI);
           if (intensity < 0.025) continue;
 
           drawEdge(ctx, v1, v2, col, intensity);
