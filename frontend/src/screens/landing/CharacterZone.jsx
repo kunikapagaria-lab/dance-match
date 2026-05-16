@@ -8,7 +8,7 @@ function SwapArrow({ dir, onClick }) {
       onClick={onClick}
       style={{
         position: 'fixed', top: '50%', zIndex: 50,
-        [isLeft ? 'left' : 'right']: 0,
+        ...(isLeft ? { left: 28 } : { right: 0 }),
         transform: 'translateY(-50%)',
         width: 64, height: 120,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -17,7 +17,7 @@ function SwapArrow({ dir, onClick }) {
         borderRight: isLeft ? '1px solid rgba(255,255,255,0.1)' : 'none',
         borderLeft:  isLeft ? 'none' : '1px solid rgba(255,255,255,0.1)',
         cursor: 'pointer', outline: 'none',
-        opacity: 0.6,
+        opacity: 0.35,
         transition: 'opacity 200ms ease, background 200ms ease',
       }}
       onMouseEnter={e => {
@@ -28,7 +28,7 @@ function SwapArrow({ dir, onClick }) {
           : '-6px 0 24px var(--glow-soft)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.opacity = '0.6';
+        e.currentTarget.style.opacity = '0.35';
         e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
         e.currentTarget.style.boxShadow = 'none';
       }}
