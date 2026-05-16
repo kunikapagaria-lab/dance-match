@@ -75,6 +75,25 @@ export const AVATARS = [
       wordmark:   'rgba(0,170,255,0.08)',
     },
   },
+  {
+    id: 'solar',
+    name: 'SOLAR',
+    style: 'Neon Surge',
+    tag: 'Waacking / Freestyle',
+    quote: 'Burn bright. Hit every beat.',
+    glb: '/models/solar.glb',
+    hueShift: 30,
+    palette: {
+      accent:     '#ffd700',
+      accentSoft: '#ffe94d',
+      glow:       'rgba(255,215,0,0.55)',
+      glowSoft:   'rgba(255,215,0,0.22)',
+      base:       '#0d0a00',
+      base2:      '#1a1400',
+      text:       '#fff8d6',
+      wordmark:   'rgba(255,215,0,0.08)',
+    },
+  },
 ];
 
 export const FALLBACK_GLB = 'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb';
