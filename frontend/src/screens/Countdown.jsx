@@ -77,39 +77,12 @@ export default function Countdown() {
         {levelLabel}
       </div>
 
-      {/* Countdown hexagon */}
-      <div style={{ position: 'relative', width: 180, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Countdown number */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {countdownValue !== undefined && countdownValue !== null ? (
           <>
-            {/* Spinning outer hexagon ring */}
-            <svg width={180} height={200} style={{ position: 'absolute', inset: 0, animation: 'spin 3s linear infinite', transformOrigin: '90px 100px' }} viewBox="0 0 180 200">
-              <polygon
-                points="90,6 168,48 168,152 90,194 12,152 12,48"
-                fill="none"
-                stroke="var(--accent, #ff1f3d)"
-                strokeWidth={2}
-                strokeDasharray="55 468"
-                opacity={0.6}
-              />
-            </svg>
-            {/* Inner hexagon glow border */}
-            <svg width={180} height={200} style={{ position: 'absolute', inset: 0 }} viewBox="0 0 180 200">
-              <defs>
-                <filter id="hglow2">
-                  <feGaussianBlur stdDeviation="5" result="blur"/>
-                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-              </defs>
-              <polygon
-                points="90,18 158,57 158,143 90,182 22,143 22,57"
-                fill="transparent"
-                stroke="var(--accent, #ff1f3d)"
-                strokeWidth={1.5}
-                filter="url(#hglow2)"
-              />
-            </svg>
             <span ref={numRef} style={{
-              fontFamily: 'Audiowide,cursive', fontSize: 72, color: 'white', lineHeight: 1,
+              fontFamily: 'Audiowide,cursive', fontSize: 96, color: 'white', lineHeight: 1,
               textShadow: '0 0 40px var(--glow, rgba(255,30,60,0.7)), 0 0 80px var(--glow-soft, rgba(255,30,60,0.3))',
               position: 'relative', zIndex: 1,
             }}>
@@ -119,30 +92,14 @@ export default function Countdown() {
         ) : (
           isHost ? (
             <button onClick={handleStartCountdown} style={{
-              position: 'relative', width: 180, height: 200,
-              background: 'none', border: 'none', outline: 'none', cursor: 'pointer', padding: 0,
-            }}>
-              <svg width={180} height={200} viewBox="0 0 180 200" style={{ position: 'absolute', inset: 0 }}>
-                <defs>
-                  <filter id="startglow">
-                    <feGaussianBlur stdDeviation="5" result="blur"/>
-                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                  </filter>
-                </defs>
-                <polygon
-                  points="90,10 166,52 166,148 90,190 14,148 14,52"
-                  fill="transparent"
-                  stroke="var(--accent, #ff1f3d)"
-                  strokeWidth={2.5}
-                  filter="url(#startglow)"
-                />
-              </svg>
-              <span style={{
-                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'Audiowide,cursive', fontSize: 22, color: 'var(--accent, #ff1f3d)',
-                textShadow: '0 0 20px var(--glow, rgba(255,30,60,0.7))',
-                letterSpacing: '0.15em',
-              }}>START</span>
+              background: 'none', border: 'none', outline: 'none', cursor: 'pointer', padding: '24px 40px',
+              fontFamily: 'Audiowide,cursive', fontSize: 24, color: 'var(--accent, #ff1f3d)',
+              textShadow: '0 0 30px var(--glow, rgba(255,30,60,0.9)), 0 0 60px var(--glow-soft, rgba(255,30,60,0.4))',
+              letterSpacing: '0.2em', transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.textShadow = '0 0 50px var(--glow), 0 0 100px var(--glow-soft)'}
+            onMouseLeave={e => e.currentTarget.style.textShadow = '0 0 30px var(--glow), 0 0 60px var(--glow-soft)'}>
+              START
             </button>
           ) : (
             <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 16, color: 'white', textAlign: 'center', opacity: 0.6 }}>
