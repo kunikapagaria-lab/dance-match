@@ -83,18 +83,18 @@ export default function Countdown() {
       ) : (
         isHost ? (
           <button onClick={handleStartCountdown} style={{
-            background: 'rgba(0,0,0,0.45)',
-            border: '1.5px solid var(--accent, #00aaff)',
+            background: 'rgba(0,0,0,0.55)',
+            border: '2.5px solid var(--accent, #00aaff)',
             outline: 'none', cursor: 'pointer',
-            padding: '18px 48px',
-            fontFamily: 'Audiowide,cursive', fontSize: 28,
+            padding: '26px 72px',
+            fontFamily: 'Audiowide,cursive', fontSize: 38,
             color: 'var(--accent, #00aaff)',
-            letterSpacing: '0.3em',
-            boxShadow: '0 0 18px var(--glow), inset 0 0 18px rgba(0,0,0,0.4)',
-            textShadow: '0 0 20px var(--glow)',
-            backdropFilter: 'blur(4px)',
+            letterSpacing: '0.4em',
+            boxShadow: '0 0 30px var(--glow), 0 0 60px var(--glow-soft), inset 0 0 24px rgba(0,0,0,0.5)',
+            textShadow: '0 0 30px var(--glow), 0 0 60px var(--glow-soft)',
+            backdropFilter: 'blur(6px)',
             transition: 'all 0.18s ease',
-            animation: 'startPulse 2s ease-in-out infinite',
+            animation: 'startPulse 1.8s ease-in-out infinite',
           }}
           onMouseEnter={e => {
             e.currentTarget.style.background = 'var(--accent)';
@@ -114,8 +114,8 @@ export default function Countdown() {
           </button>
           <style>{`
             @keyframes startPulse {
-              0%, 100% { box-shadow: 0 0 18px var(--glow), inset 0 0 18px rgba(0,0,0,0.4); }
-              50%       { box-shadow: 0 0 35px var(--glow), 0 0 60px var(--glow-soft), inset 0 0 18px rgba(0,0,0,0.4); }
+              0%, 100% { box-shadow: 0 0 30px var(--glow), 0 0 60px var(--glow-soft), inset 0 0 24px rgba(0,0,0,0.5); }
+              50%       { box-shadow: 0 0 60px var(--glow), 0 0 120px var(--glow-soft), inset 0 0 24px rgba(0,0,0,0.5); }
             }
           `}</style>
         ) : (
