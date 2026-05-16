@@ -1,124 +1,89 @@
-import { useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 
-function lay(x, y, px) {
-  return `translate3d(${px.x * x}px, ${px.y * y}px, 0)`;
-}
+const STAR_COUNT = 180;
 
-function FarSkyline({ accent }) {
-  const buildings = useMemo(() => [
-    { x: 0,   w: 80,  h: 60  }, { x: 90,  w: 50,  h: 90  }, { x: 150, w: 70,  h: 45  },
-    { x: 230, w: 40,  h: 110 }, { x: 280, w: 100, h: 70  }, { x: 390, w: 60,  h: 55  },
-    { x: 460, w: 80,  h: 95  }, { x: 550, w: 50,  h: 75  }, { x: 610, w: 90,  h: 50  },
-    { x: 710, w: 55,  h: 100 }, { x: 775, w: 70,  h: 65  }, { x: 855, w: 45,  h: 80  },
-    { x: 910, w: 110, h: 55  }, { x:1030, w: 60,  h: 90  }, { x:1100, w: 80,  h: 70  },
-    { x:1190, w: 50,  h: 100 }, { x:1250, w: 90,  h: 60  }, { x:1350, w: 80,  h: 85  },
-  ], []);
-  const windows = useMemo(() =>
-    buildings.flatMap((b, bi) =>
-      Array.from({ length: Math.floor(b.w * b.h / 1800) }, (_, i) => ({
-        key: `${bi}-${i}`, x: b.x + 6 + (i % 4) * (b.w / 4),
-        y: 200 - b.h + 8 + Math.floor(i / 4) * 12, lit: (bi + i) % 2 === 0,
-      }))
-    ), [buildings]);
-  return (
-    <svg viewBox="0 0 1440 200" style={{ position: 'absolute', bottom: 0, width: '100%', height: 200 }} preserveAspectRatio="none">
-      {buildings.map((b, i) => <rect key={i} x={b.x} y={200 - b.h} width={b.w} height={b.h} fill="#0a0a0f" />)}
-      {windows.filter(w => w.lit).map(w => <rect key={w.key} x={w.x} y={w.y} width={3} height={3} fill={accent} opacity={0.6} />)}
-    </svg>
-  );
-}
-
-function MidSkyline({ accent }) {
-  const buildings = useMemo(() => [
-    { x: 0,   w: 120, h: 140 }, { x: 130, w: 70,  h: 180 }, { x: 210, w: 90,  h: 120 },
-    { x: 310, w: 55,  h: 200 }, { x: 375, w: 140, h: 160 }, { x: 525, w: 80,  h: 140 },
-    { x: 615, w: 100, h: 190 }, { x: 725, w: 65,  h: 150 }, { x: 800, w: 110, h: 170 },
-    { x: 920, w: 75,  h: 130 }, { x:1005, w: 130, h: 175 }, { x:1145, w: 80,  h: 145 },
-    { x:1235, w: 100, h: 160 }, { x:1345, w: 95,  h: 185 },
-  ], []);
-  const signs = buildings.filter((_, i) => i % 3 === 1).map((b, i) => ({
-    key: i, x: b.x + b.w * 0.1, y: 200 - b.h + 15, w: b.w * 0.8,
+function makeStars() {
+  return Array.from({ length: STAR_COUNT }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 2.2 + 0.4,
+    depth: Math.random() * 0.75 + 0.15,   // 0.15 = far (moves little), 0.9 = close (moves a lot)
+    opacity: Math.random() * 0.6 + 0.3,
+    glow: Math.random() * 8 + 3,
+    twinkleDuration: Math.random() * 3 + 2,
+    twinkleDelay: Math.random() * 4,
   }));
+}
+
+export default function SceneBackground() {
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const stars = useMemo(makeStars, []);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      setMouse({
+        x: (e.clientX / window.innerWidth  - 0.5) * 2,
+        y: (e.clientY / window.innerHeight - 0.5) * 2,
+      });
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
   return (
-    <svg viewBox="0 0 1440 200" style={{ position: 'absolute', bottom: 0, width: '100%', height: 200 }} preserveAspectRatio="none">
-      {buildings.map((b, i) => <rect key={i} x={b.x} y={200 - b.h} width={b.w} height={b.h} fill="#06060a" />)}
-      {signs.map(s => <rect key={s.key} x={s.x} y={s.y} width={s.w} height={8} fill={accent} opacity={0.5} rx={1} />)}
-    </svg>
-  );
-}
-
-function Particles({ accent }) {
-  const pts = useMemo(() =>
-    Array.from({ length: 36 }, (_, i) => ({
-      left: `${(i * 2.77 + 3) % 100}%`, top: `${(i * 3.13 + 5) % 80}%`,
-      size: 2 + (i % 3), delay: `${(i * 0.37) % 4}s`, dur: `${3 + (i % 3)}s`,
-    })), []);
-  return <>
-    {pts.map((p, i) => (
-      <span key={i} className="particle" style={{
-        position: 'absolute', borderRadius: '50%',
-        left: p.left, top: p.top, width: p.size, height: p.size,
-        background: accent, boxShadow: `0 0 8px ${accent}`,
-        animation: `particle-float ${p.dur} ${p.delay} ease-in-out infinite`, opacity: 0.7,
-        pointerEvents: 'none',
-      }} />
-    ))}
-  </>;
-}
-
-function Streaks({ accent }) {
-  const streaks = useMemo(() =>
-    Array.from({ length: 7 }, (_, i) => ({
-      top: `${15 + i * 10}%`, height: 1 + (i % 2),
-      delay: `${i * 1.3}s`, dur: `${4 + i * 0.8}s`, width: `${120 + i * 40}px`,
-    })), []);
-  return <>
-    {streaks.map((s, i) => (
-      <span key={i} className="streak-layer" style={{
-        position: 'absolute', top: s.top, left: 0, width: s.width, height: s.height,
-        background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
-        opacity: 0.55, animation: `streak ${s.dur} ${s.delay} linear infinite`,
-        pointerEvents: 'none',
-      }} />
-    ))}
-  </>;
-}
-
-export default function SceneBackground({ parallax, palette }) {
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
-      {/* Base wash */}
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden',
+      background: '#06010f',
+    }}>
+      {/* Deep space purple glow — right side */}
       <div style={{
-        position: 'absolute', inset: 0,
-        background: `radial-gradient(ellipse 80% 60% at 70% 40%, ${palette.base2} 0%, ${palette.base} 100%)`,
-        transition: 'background 600ms ease',
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: `
+          radial-gradient(ellipse 60% 70% at 80% 35%, rgba(109,40,217,0.35) 0%, transparent 65%),
+          radial-gradient(ellipse 40% 50% at 20% 70%, rgba(88,28,235,0.18) 0%, transparent 55%),
+          radial-gradient(ellipse 80% 60% at 50% 100%, rgba(76,29,149,0.25) 0%, transparent 50%)
+        `,
       }} />
-      {/* Far skyline */}
-      <div style={{ position: 'absolute', inset: 0, transform: lay(-8, -4, parallax) }}>
-        <FarSkyline accent={palette.accent} />
-      </div>
-      {/* Mid skyline */}
-      <div style={{ position: 'absolute', inset: 0, transform: lay(-18, -8, parallax) }}>
-        <MidSkyline accent={palette.accent} />
-      </div>
 
-      {/* Floor grid */}
+      {/* Glowing parallax stars */}
+      <style>{`
+        @keyframes star-twinkle {
+          0%, 100% { opacity: var(--op); transform: translate(-50%, -50%) scale(1); }
+          50%       { opacity: calc(var(--op) * 0.4); transform: translate(-50%, -50%) scale(0.7); }
+        }
+      `}</style>
+
+      {stars.map(star => {
+        const dx = mouse.x * star.depth * 28;
+        const dy = mouse.y * star.depth * 28;
+        return (
+          <div
+            key={star.id}
+            style={{
+              position: 'absolute',
+              left: `calc(${star.x}% + ${dx}px)`,
+              top:  `calc(${star.y}% + ${dy}px)`,
+              width:  star.size,
+              height: star.size,
+              borderRadius: '50%',
+              background: '#d8b4fe',
+              transform: 'translate(-50%, -50%)',
+              boxShadow: `0 0 ${star.glow}px ${star.glow * 0.6}px rgba(192,132,252,0.7), 0 0 ${star.glow * 2}px rgba(139,92,246,0.3)`,
+              '--op': star.opacity,
+              animation: `star-twinkle ${star.twinkleDuration}s ${star.twinkleDelay}s ease-in-out infinite`,
+              transition: 'left 0.15s ease-out, top 0.15s ease-out',
+              willChange: 'left, top',
+              pointerEvents: 'none',
+            }}
+          />
+        );
+      })}
+
+      {/* Subtle vignette */}
       <div style={{
-        position: 'absolute', bottom: 0, left: '-20%', right: '-20%', height: '40%',
-        backgroundImage: `linear-gradient(${palette.accent}33 1px, transparent 1px), linear-gradient(90deg, ${palette.accent}33 1px, transparent 1px)`,
-        backgroundSize: '60px 60px',
-        transform: 'perspective(700px) rotateX(70deg)', transformOrigin: 'bottom',
-      }} />
-      <Streaks accent={palette.accent} />
-      {/* Particles */}
-      <div style={{ position: 'absolute', inset: 0, transform: lay(8, 6, parallax) }}>
-        <Particles accent={palette.accent} />
-      </div>
-      {/* Vignette */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse 90% 90% at 50% 50%, transparent 40%, rgba(0,0,0,0.75) 100%)',
-        pointerEvents: 'none',
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.55) 100%)',
       }} />
     </div>
   );
