@@ -102,8 +102,6 @@ export default function CharacterZone({ avatar, parallax, swapping, onSwap }) {
         />
       </div>
 
-      <SwapArrow dir="left"  onClick={() => onSwap(-1)} />
-      <SwapArrow dir="right" onClick={() => onSwap(1)} />
     </div>
   );
 }
