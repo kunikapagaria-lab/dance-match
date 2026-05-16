@@ -77,18 +77,37 @@ export default function Countdown() {
         {levelLabel}
       </div>
 
-      {/* Countdown ring */}
-      <div style={{ position: 'relative', width: 170, height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Countdown hexagon */}
+      <div style={{ position: 'relative', width: 180, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {countdownValue !== undefined && countdownValue !== null ? (
           <>
-            <svg width={170} height={170} style={{ position: 'absolute', inset: 0, animation: 'spin 2s linear infinite' }}>
-              <circle cx={85} cy={85} r={78} fill="none" stroke="var(--accent, #ff1f3d)" strokeWidth={2} strokeDasharray="55 440" opacity={0.6} />
+            {/* Spinning outer hexagon ring */}
+            <svg width={180} height={200} style={{ position: 'absolute', inset: 0, animation: 'spin 3s linear infinite', transformOrigin: '90px 100px' }} viewBox="0 0 180 200">
+              <polygon
+                points="90,6 168,48 168,152 90,194 12,152 12,48"
+                fill="none"
+                stroke="var(--accent, #ff1f3d)"
+                strokeWidth={2}
+                strokeDasharray="55 468"
+                opacity={0.6}
+              />
             </svg>
-            <div style={{
-              position: 'absolute', inset: 8, borderRadius: '50%',
-              border: '1.5px solid var(--accent, #ff1f3d)',
-              boxShadow: '0 0 30px var(--glow, rgba(255,30,60,0.5)), inset 0 0 30px rgba(0,0,0,0.6)',
-            }} />
+            {/* Inner hexagon glow border */}
+            <svg width={180} height={200} style={{ position: 'absolute', inset: 0 }} viewBox="0 0 180 200">
+              <defs>
+                <filter id="hglow2">
+                  <feGaussianBlur stdDeviation="5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <polygon
+                points="90,18 158,57 158,143 90,182 22,143 22,57"
+                fill="rgba(0,0,0,0.55)"
+                stroke="var(--accent, #ff1f3d)"
+                strokeWidth={1.5}
+                filter="url(#hglow2)"
+              />
+            </svg>
             <span ref={numRef} style={{
               fontFamily: 'Audiowide,cursive', fontSize: 72, color: 'white', lineHeight: 1,
               textShadow: '0 0 40px var(--glow, rgba(255,30,60,0.7)), 0 0 80px var(--glow-soft, rgba(255,30,60,0.3))',
@@ -100,13 +119,15 @@ export default function Countdown() {
         ) : (
           isHost ? (
             <button onClick={handleStartCountdown} style={{
-              width: 130, height: 130, borderRadius: '50%', background: 'rgba(255,255,255,0.05)',
-              color: 'var(--accent, #ff1f3d)', fontFamily: 'Audiowide,cursive', fontSize: 24, cursor: 'pointer',
-              border: '2px solid var(--accent, #ff1f3d)', boxShadow: '0 0 30px var(--glow, rgba(255,30,60,0.5))',
-              transition: 'all 0.2s'
+              width: 148, height: 166,
+              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--accent, #ff1f3d)', fontFamily: 'Audiowide,cursive', fontSize: 22,
+              cursor: 'pointer', border: 'none', outline: 'none',
+              transition: 'all 0.2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.background = 'var(--accent, #ff1f3d)'; e.currentTarget.style.color = 'black'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--accent, #ff1f3d)'; }}>
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent, #ff1f3d)'; e.currentTarget.style.color = 'black'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'var(--accent, #ff1f3d)'; }}>
               START
             </button>
           ) : (
