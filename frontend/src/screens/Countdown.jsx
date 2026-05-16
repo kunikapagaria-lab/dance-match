@@ -72,38 +72,35 @@ export default function Countdown() {
         <span>←</span>
         <span>BACK</span>
       </button>
-      {/* Countdown / START — absolutely centred so it lands on the middle background hexagon */}
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-        {countdownValue !== undefined && countdownValue !== null ? (
-          <span ref={numRef} style={{
-            fontFamily: 'Audiowide,cursive', fontSize: 110, color: 'white', lineHeight: 1,
-            textShadow: '0 0 40px var(--glow, rgba(255,30,60,0.7)), 0 0 80px var(--glow-soft, rgba(255,30,60,0.3))',
-            display: 'block',
-          }}>
-            {countdownValue}
-          </span>
+      {/* Countdown number or START button */}
+      {countdownValue !== undefined && countdownValue !== null ? (
+        <span ref={numRef} style={{
+          fontFamily: 'Audiowide,cursive', fontSize: 110, color: 'white', lineHeight: 1,
+          textShadow: '0 0 40px var(--glow, rgba(255,30,60,0.7)), 0 0 80px var(--glow-soft, rgba(255,30,60,0.3))',
+        }}>
+          {countdownValue}
+        </span>
+      ) : (
+        isHost ? (
+          <button onClick={handleStartCountdown} style={{
+            background: 'none', border: 'none', outline: 'none', cursor: 'pointer', padding: '16px 32px',
+            fontFamily: 'Audiowide,cursive', fontSize: 28, color: 'var(--accent, #ff1f3d)',
+            textShadow: '0 0 30px var(--glow, rgba(255,30,60,0.9)), 0 0 60px var(--glow-soft, rgba(255,30,60,0.4))',
+            letterSpacing: '0.25em', transition: 'all 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.textShadow = '0 0 50px var(--glow), 0 0 100px var(--glow-soft)'}
+          onMouseLeave={e => e.currentTarget.style.textShadow = '0 0 30px var(--glow), 0 0 60px var(--glow-soft)'}>
+            START
+          </button>
         ) : (
-          isHost ? (
-            <button onClick={handleStartCountdown} style={{
-              background: 'none', border: 'none', outline: 'none', cursor: 'pointer', padding: '16px 32px',
-              fontFamily: 'Audiowide,cursive', fontSize: 28, color: 'var(--accent, #ff1f3d)',
-              textShadow: '0 0 30px var(--glow, rgba(255,30,60,0.9)), 0 0 60px var(--glow-soft, rgba(255,30,60,0.4))',
-              letterSpacing: '0.25em', transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.textShadow = '0 0 50px var(--glow), 0 0 100px var(--glow-soft)'}
-            onMouseLeave={e => e.currentTarget.style.textShadow = '0 0 30px var(--glow), 0 0 60px var(--glow-soft)'}>
-              START
-            </button>
-          ) : (
-            <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 16, color: 'white', textAlign: 'center', opacity: 0.6 }}>
-              WAITING<br/>FOR HOST
-            </div>
-          )
-        )}
-      </div>
+          <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 16, color: 'white', textAlign: 'center', opacity: 0.6 }}>
+            WAITING<br/>FOR HOST
+          </div>
+        )
+      )}
 
-      {/* Instruction — bottom of screen */}
-      <div style={{ position: 'absolute', bottom: 200, left: '50%', transform: 'translateX(-50%)', fontFamily: 'Audiowide,cursive', fontSize: 12, letterSpacing: '0.45em', color: 'white', opacity: 0.65, whiteSpace: 'nowrap' }}>
+      {/* Instruction */}
+      <div style={{ fontFamily: 'Audiowide,cursive', fontSize: 12, letterSpacing: '0.45em', color: 'white', opacity: 0.65 }}>
         GET READY TO DANCE
       </div>
 
