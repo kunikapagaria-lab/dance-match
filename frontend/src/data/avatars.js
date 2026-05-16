@@ -1,24 +1,5 @@
 export const AVATARS = [
   {
-    id: 'ruby',
-    name: 'RUBY',
-    style: 'Crimson Edge',
-    tag: 'Street / Hip-Hop',
-    quote: 'Hit harder. Move sharper.',
-    glb: '/models/ruby.glb',
-    hueShift: 0,
-    palette: {
-      accent:     '#ff1f3d',
-      accentSoft: '#ff5c70',
-      glow:       'rgba(255, 30, 60, 0.55)',
-      glowSoft:   'rgba(255, 60, 90, 0.25)',
-      base:       '#0a0203',
-      base2:      '#1a0508',
-      text:       '#ffe9ec',
-      wordmark:   'rgba(255, 40, 70, 0.07)',
-    },
-  },
-  {
     id: 'verde',
     name: 'VERDE',
     style: 'Acid Pulse',
